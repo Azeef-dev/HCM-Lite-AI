@@ -23,6 +23,10 @@ import EmployeeCreate from "@/pages/employees/EmployeeCreate";
 import EmployeeDetail from "@/pages/employees/EmployeeDetail";
 import EmployeeImport from "@/pages/employees/EmployeeImport";
 
+import MyAttendance from "@/pages/employee/MyAttendance";
+import AttendanceBoard from "@/pages/attendance/AttendanceBoard";
+import CorrectionRequests from "@/pages/attendance/CorrectionRequests";
+
 function RootRedirect() {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -37,7 +41,7 @@ export default function App() {
     <AuthProvider>
       <Toaster position="top-right" />
       <Routes>
-        {/* Public / auth routes */}
+        {/* ───────────── Public / Auth ───────────── */}
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<Login />} />
         <Route path="/setup" element={<Setup />} />
@@ -49,12 +53,14 @@ export default function App() {
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
 
-            {/* Employees — Admin has view-only (All), no create/import */}
+            {/* Employees — Admin: view-only (All scope) */}
             <Route path="/admin/employees" element={<EmployeeList />} />
             <Route path="/admin/employees/:id" element={<EmployeeDetail />} />
 
+            {/* Attendance — Admin: view board only */}
+            <Route path="/admin/attendance" element={<AttendanceBoard />} />
+
             <Route path="/admin/organization" element={<Placeholder title="Organization Setup" />} />
-            <Route path="/admin/attendance" element={<Placeholder title="Attendance" />} />
             <Route path="/admin/leave" element={<Placeholder title="Leave" />} />
             <Route path="/admin/payroll" element={<Placeholder title="Payroll" />} />
             <Route path="/admin/ai" element={<Placeholder title="AI Assistant" />} />
@@ -68,13 +74,16 @@ export default function App() {
           <Route element={<HrLayout />}>
             <Route path="/hr" element={<HrDashboard />} />
 
-            {/* Employees — HR has full Manage scope */}
+            {/* Employees — HR: full Manage scope */}
             <Route path="/hr/employees" element={<EmployeeList />} />
             <Route path="/hr/employees/new" element={<EmployeeCreate />} />
             <Route path="/hr/employees/import" element={<EmployeeImport />} />
             <Route path="/hr/employees/:id" element={<EmployeeDetail />} />
 
-            <Route path="/hr/attendance" element={<Placeholder title="Attendance" />} />
+            {/* Attendance — HR: board + correction approvals */}
+            <Route path="/hr/attendance" element={<AttendanceBoard />} />
+            <Route path="/hr/attendance/corrections" element={<CorrectionRequests />} />
+
             <Route path="/hr/leave" element={<Placeholder title="Leave Requests" />} />
             <Route path="/hr/payroll" element={<Placeholder title="Payroll" />} />
             <Route path="/hr/ai" element={<Placeholder title="AI Assistant" />} />
@@ -90,7 +99,9 @@ export default function App() {
             {/* Employee can view own 360 profile only */}
             <Route path="/employee/profile/:id" element={<EmployeeDetail />} />
 
-            <Route path="/employee/attendance" element={<Placeholder title="My Attendance" />} />
+            {/* Attendance — Employee: own check-in/out + history */}
+            <Route path="/employee/attendance" element={<MyAttendance />} />
+
             <Route path="/employee/leave" element={<Placeholder title="My Leave" />} />
             <Route path="/employee/payslips" element={<Placeholder title="Payslips" />} />
             <Route path="/employee/ai" element={<Placeholder title="AI Assistant" />} />
@@ -98,7 +109,7 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* Catch-all */}
+        {/* ───────────── Catch-all ───────────── */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>
