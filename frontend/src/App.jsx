@@ -13,13 +13,13 @@ import { ChevronDown, Rocket } from "lucide-react"
 
 export default function App() {
   const showToast = () => {
-    toast.success("Hackathon setup successfully connected! 🚀")
+    toast.success("Hackathon setup successfully connected!")
   }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6">
       {/* Toast Container */}
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
 
       <Card className="w-full max-w-md p-4">
         <CardHeader>
