@@ -81,7 +81,7 @@ export default function Setup() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-secondary via-background to-accent/30 p-4 sm:p-8">
+        <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-secondary via-background to-accent/30 p-4 sm:p-8">
             <div className="w-full max-w-lg">
                 <div className="flex flex-col items-center mb-8 text-center">
                     <Logo size="lg" />
