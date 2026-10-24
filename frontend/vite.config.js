@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "./src"), // Yahan __dirname ki jagah import.meta.dirname kar diya
+      "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
 })
