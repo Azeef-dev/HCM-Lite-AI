@@ -9,6 +9,7 @@ const navItems = [
     { to: "/hr/payroll", label: "Payroll", icon: Wallet },
     { to: "/hr/ai", label: "AI Assistant", icon: Bot },
     { to: "/hr/comms", label: "Announcements", icon: Megaphone },
+    { to: "/hr/attendance/corrections", label: "Corrections", icon: ClipboardCheck },
 ];
 
 export default function HrLayout() {
