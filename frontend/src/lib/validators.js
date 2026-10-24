@@ -60,3 +60,17 @@ export function validateCompanyName(value) {
     if (!/^[A-Za-z0-9&.,'\- ]+$/.test(value)) return "Company name has invalid characters";
     return "";
 }
+
+export function validateIsoDate(value, { required = true, label = "Date" } = {}) {
+    if (!value) return required ? `${label} is required` : "";
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return `${label} must be a valid date`;
+    return "";
+}
+
+export function validatePositiveNumber(value, { required = true, label = "Value" } = {}) {
+    if (value === "" || value === null || value === undefined) return required ? `${label} is required` : "";
+    const n = Number(value);
+    if (isNaN(n) || n <= 0) return `${label} must be a positive number`;
+    return "";
+}
