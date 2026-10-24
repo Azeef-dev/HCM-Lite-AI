@@ -1,66 +1,82 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import toast, { Toaster } from "react-hot-toast"
-import { ChevronDown, Rocket } from "lucide-react"
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+
+import Login from "@/pages/Login";
+import Setup from "@/pages/Setup";
+import ChangePassword from "@/pages/ChangePassword";
+import Unauthorized from "@/pages/Unauthorized";
+import NotFound from "@/pages/NotFound";
+import Placeholder from "@/pages/Placeholder";
+
+import AdminLayout from "@/layouts/AdminLayout";
+import HrLayout from "@/layouts/HrLayout";
+import EmployeeLayout from "@/layouts/EmployeeLayout";
+
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import HrDashboard from "@/pages/hr/HrDashboard";
+import EmployeeDashboard from "@/pages/employee/EmployeeDashboard";
+
+function RootRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === "admin") return <Navigate to="/admin" replace />;
+  if (user.role === "hr") return <Navigate to="/hr" replace />;
+  return <Navigate to="/employee" replace />;
+}
 
 export default function App() {
-  const showToast = () => {
-    toast.success("Hackathon setup successfully connected!")
-  }
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6">
-      {/* Toast Container */}
-      <Toaster position="top-center" />
+    <AuthProvider>
+      <Toaster position="top-right" />
+      <Routes>
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/setup" element={<Setup />} />
+        <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
 
-      <Card className="w-full max-w-md p-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Rocket className="h-5 w-5 text-blue-600" />
-            Saylani Hackathon Ready
-          </CardTitle>
-        </CardHeader>
+        <Route element={<ProtectedRoute roles={["admin"]} />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/organization" element={<Placeholder title="Organization Setup" />} />
+            <Route path="/admin/employees" element={<Placeholder title="Employees" />} />
+            <Route path="/admin/attendance" element={<Placeholder title="Attendance" />} />
+            <Route path="/admin/leave" element={<Placeholder title="Leave" />} />
+            <Route path="/admin/payroll" element={<Placeholder title="Payroll" />} />
+            <Route path="/admin/ai" element={<Placeholder title="AI Assistant" />} />
+            <Route path="/admin/comms" element={<Placeholder title="Announcements" />} />
+            <Route path="/admin/audit" element={<Placeholder title="Audit Log" />} />
+          </Route>
+        </Route>
 
-        <CardContent className="space-y-4">
-          {/* Input field */}
-          <Input placeholder="Project title enter karein..." />
+        <Route element={<ProtectedRoute roles={["hr"]} />}>
+          <Route element={<HrLayout />}>
+            <Route path="/hr" element={<HrDashboard />} />
+            <Route path="/hr/employees" element={<Placeholder title="Employees" />} />
+            <Route path="/hr/attendance" element={<Placeholder title="Attendance" />} />
+            <Route path="/hr/leave" element={<Placeholder title="Leave Requests" />} />
+            <Route path="/hr/payroll" element={<Placeholder title="Payroll" />} />
+            <Route path="/hr/ai" element={<Placeholder title="AI Assistant" />} />
+            <Route path="/hr/comms" element={<Placeholder title="Announcements" />} />
+          </Route>
+        </Route>
 
-          {/* Dropdown Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full justify-between">
-                Category Select Karein
-                <ChevronDown className="h-4 w-4 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuItem>Web Development</DropdownMenuItem>
-              <DropdownMenuItem>AI / Machine Learning</DropdownMenuItem>
-              <DropdownMenuItem>Mobile App</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <Route element={<ProtectedRoute roles={["employee"]} />}>
+          <Route element={<EmployeeLayout />}>
+            <Route path="/employee" element={<EmployeeDashboard />} />
+            <Route path="/employee/attendance" element={<Placeholder title="My Attendance" />} />
+            <Route path="/employee/leave" element={<Placeholder title="My Leave" />} />
+            <Route path="/employee/payslips" element={<Placeholder title="Payslips" />} />
+            <Route path="/employee/ai" element={<Placeholder title="AI Assistant" />} />
+            <Route path="/employee/notifications" element={<Placeholder title="Notifications" />} />
+          </Route>
+        </Route>
 
-          {/* Skeleton Example */}
-          <div className="space-y-2 pt-2">
-            <p className="text-xs text-muted-foreground">Loading Skeleton Preview:</p>
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </div>
-
-          {/* Toast Action Button */}
-          <Button onClick={showToast} className="w-full mt-4">
-            Test Hot Toast
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  )
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AuthProvider>
+  );
 }
