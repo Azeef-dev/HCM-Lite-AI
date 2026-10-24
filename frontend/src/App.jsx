@@ -18,10 +18,11 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import HrDashboard from "@/pages/hr/HrDashboard";
 import EmployeeDashboard from "@/pages/employee/EmployeeDashboard";
 
-import EmployeeList from "@/pages/employees/EmployeeList";
-import EmployeeCreate from "@/pages/employees/EmployeeCreate";
-import EmployeeDetail from "@/pages/employees/EmployeeDetail";
-import EmployeeImport from "@/pages/employees/EmployeeImport";
+// NOTE: All employee-record pages live under pages/employee/ (singular) in this project
+import EmployeeList from "@/pages/employee/EmployeeList";
+import EmployeeCreate from "@/pages/employee/EmployeeCreate";
+import EmployeeDetail from "@/pages/employee/EmployeeDetail";
+import EmployeeImport from "@/pages/employee/EmployeeImport";
 
 import MyAttendance from "@/pages/employee/MyAttendance";
 import AttendanceBoard from "@/pages/attendance/AttendanceBoard";
