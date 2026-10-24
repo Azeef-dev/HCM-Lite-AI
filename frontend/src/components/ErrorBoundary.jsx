@@ -20,7 +20,7 @@ export default class ErrorBoundary extends Component {
                 <div className="min-h-screen flex items-center justify-center bg-red-50 p-8">
                     <div className="max-w-2xl w-full bg-white border border-red-300 rounded-lg p-6 shadow">
                         <h1 className="text-xl font-bold text-red-600 mb-3">Something broke 💥</h1>
-                        <pre className="text-sm text-red-800 whitespace-pre-wrap break-words bg-red-100 p-4 rounded">
+                        <pre className="text-sm text-red-800 whitespace-pre-wrap wrap-break-word bg-red-100 p-4 rounded">
                             {this.state.error.message}
                             {"\n\n"}
                             {this.state.error.stack}
