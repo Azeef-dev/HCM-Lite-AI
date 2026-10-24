@@ -21,7 +21,26 @@ connectDB();
 
 const app = express();
 
-app.use(cors({ origin: process.env.FRONTEND_URL || "*", credentials: true }));
+const allowedOrigins = (process.env.FRONTEND_URL || "")
+    .split(",")
+    .map((o) => o.trim().replace(/\/$/, "")) // remove trailing slash
+    .filter(Boolean);
+
+// Always allow local dev
+allowedOrigins.push("http://localhost:5173", "http://127.0.0.1:5173");
+
+app.use(
+    cors({
+        origin: function (origin, callback) {
+            if (!origin) return callback(null, true); // Postman/curl/server-to-server
+            const clean = origin.replace(/\/$/, "");
+            if (allowedOrigins.includes(clean)) return callback(null, true);
+            return callback(new Error(`CORS blocked for origin: ${origin}`));
+        },
+        credentials: true,
+    })
+);
+
 app.use(express.json());
 app.use(morgan("dev"));
 
