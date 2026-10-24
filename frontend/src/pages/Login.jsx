@@ -64,7 +64,7 @@ export default function Login() {
     return (
         <div className="min-h-screen grid lg:grid-cols-2 bg-background">
             {/* Left branding panel */}
-            <div className="hidden lg:flex flex-col justify-between relative overflow-hidden bg-gradient-to-br from-primary via-primary to-accent p-12 text-primary-foreground">
+            <div className="hidden lg:flex flex-col justify-between relative overflow-hidden bg-linear-to-br from-primary via-primary to-accent p-12 text-primary-foreground">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.15),transparent_40%)]" />
                 <div className="relative flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center">
