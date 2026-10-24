@@ -108,6 +108,7 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: "cv11", "ss01";
   }
 }
