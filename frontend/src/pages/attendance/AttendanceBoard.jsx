@@ -8,6 +8,7 @@ import { Badge, statusBadge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/EmptyState";
 import StatCard from "@/components/StatCard";
+import DropdownSelect from "@/components/DropdownSelect";
 import { Users, UserCheck, UserX, Clock, CalendarOff } from "lucide-react";
 
 export default function AttendanceBoard() {
@@ -31,6 +32,7 @@ export default function AttendanceBoard() {
 
     const rows = data?.rows || data?.employees || [];
     const summary = data?.summary || {};
+    const departmentOptions = [{ value: "", label: "All Departments" }, ...departments.map((d) => ({ value: d._id, label: d.name }))];
 
     return (
         <div className="space-y-6">
@@ -41,10 +43,7 @@ export default function AttendanceBoard() {
                 </div>
                 <div className="flex gap-2">
                     <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-auto" />
-                    <select value={department} onChange={(e) => setDepartment(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
-                        <option value="">All Departments</option>
-                        {departments.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
-                    </select>
+                    <DropdownSelect value={department} onChange={setDepartment} options={departmentOptions} placeholder="All Departments" />
                 </div>
             </div>
 
