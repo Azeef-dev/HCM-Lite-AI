@@ -110,6 +110,8 @@ export default function App() {
             <Route path="/employee" element={<EmployeeDashboard />} />
             <Route path="/employee/profile/:id" element={<EmployeeDetail />} />
             <Route path="/employee/attendance" element={<MyAttendance />} />
+            <Route path="/employee/payslips" element={<MyPayslips />} />
+            <Route path="/employee/ai" element={<AiAssistant />} />
 
             {/* Leave — Employee: apply/cancel/balance */}
             <Route path="/employee/leave" element={<MyLeave />} />
