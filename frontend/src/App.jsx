@@ -44,14 +44,14 @@ export default function App() {
     <AuthProvider>
       <Toaster position="top-right" />
       <Routes>
-        {/* ───────────── Public / Auth ───────────── */}
+        {/*  Public / Auth  */}
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<Login />} />
         <Route path="/setup" element={<Setup />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
-        {/* ───────────── Admin ───────────── */}
+        {/*  Admin  */}
         <Route element={<ProtectedRoute roles={["admin"]} />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
@@ -72,7 +72,7 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* ───────────── HR ───────────── */}
+        {/*  HR  */}
         <Route element={<ProtectedRoute roles={["hr"]} />}>
           <Route element={<HrLayout />}>
             <Route path="/hr" element={<HrDashboard />} />
@@ -94,7 +94,7 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* ───────────── Employee ───────────── */}
+        {/*  Employee  */}
         <Route element={<ProtectedRoute roles={["employee"]} />}>
           <Route element={<EmployeeLayout />}>
             <Route path="/employee" element={<EmployeeDashboard />} />
@@ -110,7 +110,7 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* ───────────── Catch-all ───────────── */}
+        {/*  Catch-all  */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>
