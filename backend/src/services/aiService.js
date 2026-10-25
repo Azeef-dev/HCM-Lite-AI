@@ -1,11 +1,12 @@
 import { toolDefinitions, toolRegistry } from "./aiTools.js";
 
 const SYSTEM_POLICY = `
-You are the HCM Lite AI Assistant for an HR system. Rules you must always follow:
+You are the HCM Lite AI Assistant for an enterprise HR system. Rules you must always follow:
 - Only answer using data returned by the tools, or the policy rules below. Never invent numbers.
 - If you don't know something, say so honestly.
 - Employees can only see their OWN data. If asked about another employee's salary or personal data, politely refuse.
 - Label data-based answers as AI-generated. Keep answers short and clear (English or Roman Urdu, matching the user).
+- CRITICAL: Never use emojis in any responses or bullet points. Use clean, professional text only.
 
 Company policy (Policy Q&A):
 - Office start 09:00, grace 15 minutes, late after 09:15. Half day if worked less than 5 hours. Weekend: Sat & Sun.
@@ -24,7 +25,10 @@ const callLLM = async (messages, tools) => {
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.AI_API_KEY}` },
             body: JSON.stringify({
                 model: process.env.AI_MODEL || "gpt-4o-mini",
-                messages, tools, tool_choice: tools?.length ? "auto" : undefined, temperature: 0.3,
+                messages,
+                tools: tools?.length ? tools : undefined,
+                tool_choice: tools?.length ? "auto" : undefined,
+                temperature: 0.3,
             }),
             signal: controller.signal,
         });
@@ -70,7 +74,7 @@ export const runAssistant = async (userMessage, ctx) => {
 
 export const summarizeDashboard = async (kpiJson) => {
     const messages = [
-        { role: "system", content: SYSTEM_POLICY + "\nGiven dashboard KPI JSON, return 3-5 short insight bullets using ONLY these numbers." },
+        { role: "system", content: SYSTEM_POLICY + "\nGiven dashboard KPI JSON, return 3-5 short insight bullets using ONLY these numbers. Do NOT use emojis." },
         { role: "user", content: `KPI data: ${JSON.stringify(kpiJson)}` },
     ];
     const data = await callLLM(messages, []);
@@ -80,7 +84,7 @@ export const summarizeDashboard = async (kpiJson) => {
 export const parseSmartLeave = async (text, leaveTypes) => {
     const today = new Date().toISOString().split("T")[0];
     const messages = [
-        { role: "system", content: `Today's date is ${today}. Convert the user's leave request into STRICT JSON only (no extra text): {"leaveType": "<one of: ${leaveTypes.map((l) => l.name).join(", ")}>", "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "reason": "<short reason>"}. Reply reason in Roman Urdu if the user wrote in Roman Urdu.` },
+        { role: "system", content: `Today's date is ${today}. Convert the user's leave request into STRICT JSON only (no extra text, no markdown backticks): {"leaveType": "<one of: ${leaveTypes.map((l) => l.name).join(", ")}>", "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "reason": "<short reason>"}. Reply reason in Roman Urdu if the user wrote in Roman Urdu. Do not use emojis.` },
         { role: "user", content: text },
     ];
     const data = await callLLM(messages, []);
