@@ -50,7 +50,7 @@ function RootRedirect() {
 export default function App() {
   return (
     <AuthProvider>
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<Login />} />
