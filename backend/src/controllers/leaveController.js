@@ -8,8 +8,12 @@ import { validateAndCreateLeave, getBalanceForEmployee } from "../services/leave
 import { logAudit } from "../services/auditService.js";
 import { createNotification } from "../services/notificationService.js";
 
-const getCtx = async () => {
-    const [company, holidays] = await Promise.all([Company.findOne(), Holiday.find()]);
+const getCtx = async (req) => {
+    const companyId = req?.user?.companyId;
+    const [company, holidays] = await Promise.all([
+        companyId ? Company.findById(companyId) : Company.findOne(),
+        Holiday.find(companyId ? { company: companyId } : {}),
+    ]);
     return { company: company || { weekends: [0, 6] }, holidays };
 };
 
@@ -20,8 +24,17 @@ export const applyLeave = asyncHandler(async (req, res) => {
     const leaveType = await LeaveType.findById(leaveTypeId);
     if (!leaveType) return res.status(404).json({ message: "Leave type not found" });
 
-    const { company, holidays } = await getCtx();
-    const request = await validateAndCreateLeave({ employeeId, leaveType, startDate, endDate, reason, company, holidays });
+    const { company, holidays } = await getCtx(req);
+    const request = await validateAndCreateLeave({
+        employeeId,
+        leaveType,
+        startDate,
+        endDate,
+        reason,
+        company,
+        holidays,
+        companyId: req.user.companyId,
+    });
     res.status(201).json(request);
 });
 
@@ -42,13 +55,17 @@ export const getMyLeaves = asyncHandler(async (req, res) => {
 
 export const getMyBalance = asyncHandler(async (req, res) => {
     const year = Number(req.query.year) || new Date().getFullYear();
-    const leaveTypes = await LeaveType.find();
+    const leaveTypes = await LeaveType.find(req.user?.companyId ? { company: req.user.companyId } : {});
     const balance = await getBalanceForEmployee(req.user.employeeId, leaveTypes, year);
     res.json(balance);
 });
 
 export const listPendingLeaves = asyncHandler(async (req, res) => {
-    const leaves = await LeaveRequest.find({ status: "pending" })
+    const companyId = req.user?.companyId;
+    const filter = { status: "pending" };
+    if (companyId) filter.company = companyId;
+
+    const leaves = await LeaveRequest.find(filter)
         .populate("leaveType")
         .populate({ path: "employee", select: "name employeeCode department", populate: "department" })
         .sort({ createdAt: 1 });
@@ -57,7 +74,10 @@ export const listPendingLeaves = asyncHandler(async (req, res) => {
 
 export const listAllLeaves = asyncHandler(async (req, res) => {
     const { status, employee, department } = req.query;
+    const companyId = req.user?.companyId;
+
     const filter = {};
+    if (companyId) filter.company = companyId;
     if (status) filter.status = status;
     if (employee) filter.employee = employee;
 
@@ -80,7 +100,15 @@ export const approveLeave = asyncHandler(async (req, res) => {
     leave.comment = req.body.comment || "";
     await leave.save();
 
-    await logAudit({ actor: req.user, action: "approve", entity: "LeaveRequest", entityId: leave._id, before, after: leave });
+    await logAudit({
+        actor: req.user,
+        action: "approve",
+        entity: "LeaveRequest",
+        entityId: leave._id,
+        before,
+        after: leave,
+        companyId: req.user?.companyId,
+    });
 
     const user = await User.findOne({ employee: leave.employee });
     if (user) {
@@ -89,6 +117,7 @@ export const approveLeave = asyncHandler(async (req, res) => {
             title: "Leave approved",
             message: `Your ${leave.leaveType.name} leave (${leave.days} day(s)) has been approved.`,
             type: "leave",
+            company: req.user?.companyId,
         });
     }
 
@@ -105,7 +134,15 @@ export const rejectLeave = asyncHandler(async (req, res) => {
     leave.comment = req.body.comment || "";
     await leave.save();
 
-    await logAudit({ actor: req.user, action: "reject", entity: "LeaveRequest", entityId: leave._id, before, after: leave });
+    await logAudit({
+        actor: req.user,
+        action: "reject",
+        entity: "LeaveRequest",
+        entityId: leave._id,
+        before,
+        after: leave,
+        companyId: req.user?.companyId,
+    });
 
     const user = await User.findOne({ employee: leave.employee });
     if (user) {
@@ -114,6 +151,7 @@ export const rejectLeave = asyncHandler(async (req, res) => {
             title: "Leave rejected",
             message: `Your ${leave.leaveType.name} leave request was rejected.${leave.comment ? " Reason: " + leave.comment : ""}`,
             type: "leave",
+            company: req.user?.companyId,
         });
     }
 
