@@ -208,7 +208,7 @@ export default function MyLeave() {
                                             <td className="px-4 py-3">{r.leaveType?.name || r.leaveTypeName || "—"}</td>
                                             <td className="px-4 py-3">{formatDate(r.startDate)} – {formatDate(r.endDate)}</td>
                                             <td className="px-4 py-3">{r.days ?? "—"}</td>
-                                            <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate" title={r.reason}>{r.reason}</td>
+                                            <td className="px-4 py-3 text-muted-foreground max-w-50 truncate" title={r.reason}>{r.reason}</td>
                                             <td className="px-4 py-3"><Badge variant={statusBadge(r.status)}>{r.status}</Badge></td>
                                             <td className="px-4 py-3 text-right">
                                                 {(r.status === "pending" || r.status === "approved") && (
