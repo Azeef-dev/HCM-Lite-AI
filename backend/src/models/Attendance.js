@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const attendanceSchema = new mongoose.Schema(
     {
+        company: { type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null },
         employee: { type: mongoose.Schema.Types.ObjectId, ref: "Employee", required: true },
         date: { type: Date, required: true }, // normalized to midnight
         checkInTime: { type: Date, default: null },
@@ -28,5 +29,6 @@ const attendanceSchema = new mongoose.Schema(
 );
 
 attendanceSchema.index({ employee: 1, date: 1 }, { unique: true });
+attendanceSchema.index({ company: 1, date: 1 });
 
 export default mongoose.model("Attendance", attendanceSchema);
