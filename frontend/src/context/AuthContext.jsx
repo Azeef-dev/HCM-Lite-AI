@@ -39,13 +39,38 @@ export function AuthProvider({ children }) {
         return data.user;
     }
 
+    async function registerCompany(payload) {
+        const data = await authApi.registerCompany(payload);
+        api.setToken(data.token);
+        setUser(data.user);
+        return data.user;
+    }
+
+    async function registerUser(payload) {
+        const data = await authApi.registerUser(payload);
+        api.setToken(data.token);
+        setUser(data.user);
+        return data.user;
+    }
+
     function logout() {
         api.setToken(null);
         setUser(null);
     }
 
     return (
-        <AuthContext.Provider value={{ user, setUser, loading, login, logout, refresh: loadMe }}>
+        <AuthContext.Provider
+            value={{
+                user,
+                setUser,
+                loading,
+                login,
+                registerCompany,
+                registerUser,
+                logout,
+                refresh: loadMe,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );
