@@ -2,7 +2,17 @@ import LeaveRequest from "../models/LeaveRequest.js";
 import { countWorkingDays } from "./calendarService.js";
 
 // Throws a validated error object { status, message } on failure
-export const validateAndCreateLeave = async ({ employeeId, leaveType, startDate, endDate, reason, company, holidays, source = "manual" }) => {
+export const validateAndCreateLeave = async ({
+    employeeId,
+    leaveType,
+    startDate,
+    endDate,
+    reason,
+    company,
+    holidays,
+    companyId,
+    source = "manual",
+}) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
@@ -55,12 +65,14 @@ export const validateAndCreateLeave = async ({ employeeId, leaveType, startDate,
     }
 
     return LeaveRequest.create({
+        company: companyId || company?._id || null,
         employee: employeeId,
         leaveType: leaveType._id,
         startDate: start,
         endDate: end,
         days,
         reason,
+        status: "pending",
         source,
     });
 };
@@ -69,19 +81,22 @@ export const getBalanceForEmployee = async (employeeId, leaveTypes, year) => {
     const yearStart = new Date(year, 0, 1);
     const yearEnd = new Date(year, 11, 31, 23, 59, 59);
 
-    const approved = await LeaveRequest.find({
+    const approvedLeaves = await LeaveRequest.find({
         employee: employeeId,
         status: "approved",
         startDate: { $gte: yearStart, $lte: yearEnd },
     });
 
     return leaveTypes.map((lt) => {
-        const used = approved.filter((l) => l.leaveType.toString() === lt._id.toString()).reduce((s, l) => s + l.days, 0);
+        const used = approvedLeaves
+            .filter((l) => l.leaveType.toString() === lt._id.toString())
+            .reduce((sum, l) => sum + l.days, 0);
         return {
             leaveType: lt.name,
+            leaveTypeId: lt._id,
             quota: lt.annualQuota,
             used,
-            remaining: lt.annualQuota > 0 ? lt.annualQuota - used : null, // null = unlimited
+            remaining: lt.annualQuota === 0 ? "Unlimited" : Math.max(lt.annualQuota - used, 0),
         };
     });
 };
