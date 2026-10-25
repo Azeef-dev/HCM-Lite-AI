@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authApi } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/Logo";
@@ -12,10 +13,10 @@ import {
     MapPin,
     Phone,
     Loader2,
-    AlertTriangle,
     CheckCircle2,
-    ArrowRight,
-    RefreshCw,
+    UserPlus,
+    LogIn,
+    Briefcase,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -26,75 +27,87 @@ import {
     validatePhone,
     validateFreeText,
 } from "@/lib/validators";
+import { redirectByRole } from "@/pages/Login";
 
 const FEATURES = [
-    "Set up your organization in minutes",
-    "Create the first Administrator account",
-    "Start managing employees, attendance, leave and payroll",
+    "Independent multi-company workspaces",
+    "Instant Administrator account setup with defaults",
+    "Employee self-registration for active organizations",
+    "Integrated HR operations, attendance, and payroll",
 ];
 
 export default function Setup() {
     const navigate = useNavigate();
-    const [checking, setChecking] = useState(true);
-    const [checkError, setCheckError] = useState(null);
-    const [alreadySetup, setAlreadySetup] = useState(false);
+    const { registerCompany, registerUser } = useAuth();
+    const [mode, setMode] = useState("company"); // "company" | "employee"
 
-    const [form, setForm] = useState({
+    // Existing companies list for employee signup
+    const [companies, setCompanies] = useState([]);
+    const [loadingCompanies, setLoadingCompanies] = useState(false);
+
+    // Company form
+    const [companyForm, setCompanyForm] = useState({
         companyName: "",
         companyAddress: "",
         companyPhone: "",
+        industry: "Information Technology",
         adminName: "",
         adminEmail: "",
         adminPassword: "",
         confirmPassword: "",
     });
+
+    // Employee form
+    const [employeeForm, setEmployeeForm] = useState({
+        companyId: "",
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+    });
+
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
 
-    async function checkStatus() {
-        setChecking(true);
-        setCheckError(null);
-        try {
-            const res = await authApi.status();
-            const isComplete = res?.data?.isSetupComplete ?? res?.isSetupComplete ?? false;
-            setAlreadySetup(Boolean(isComplete));
-        } catch (err) {
-            setCheckError(err.message || "Could not reach the server. Please try again.");
-        } finally {
-            setChecking(false);
-        }
-    }
-
     useEffect(() => {
-        checkStatus();
+        setLoadingCompanies(true);
+        authApi.companies()
+            .then((list) => {
+                const arr = Array.isArray(list) ? list : list.data || [];
+                setCompanies(arr);
+                if (arr.length > 0) {
+                    setEmployeeForm((p) => ({ ...p, companyId: p.companyId || arr[0]._id }));
+                }
+            })
+            .catch(() => {})
+            .finally(() => setLoadingCompanies(false));
     }, []);
 
-    function updateField(key, value) {
-        setForm((prev) => ({ ...prev, [key]: value }));
-        setErrors((prev) => ({ ...prev, [key]: undefined }));
+    function updateCompanyField(k, v) {
+        setCompanyForm((p) => ({ ...p, [k]: v }));
+        setErrors((p) => ({ ...p, [k]: undefined }));
     }
 
-    function validate() {
+    function updateEmployeeField(k, v) {
+        setEmployeeForm((p) => ({ ...p, [k]: v }));
+        setErrors((p) => ({ ...p, [k]: undefined }));
+    }
+
+    function validateCompany() {
         const next = {};
-        const companyNameErr = validateCompanyName(form.companyName);
-        if (companyNameErr) next.companyName = companyNameErr;
+        const cNameErr = validateCompanyName(companyForm.companyName);
+        if (cNameErr) next.companyName = cNameErr;
 
-        const addressErr = validateFreeText(form.companyAddress, { required: true, label: "Address" });
-        if (addressErr) next.companyAddress = addressErr;
+        const aNameErr = validatePersonName(companyForm.adminName);
+        if (aNameErr) next.adminName = aNameErr;
 
-        const phoneErr = validatePhone(form.companyPhone, { required: true });
-        if (phoneErr) next.companyPhone = phoneErr;
-
-        const nameErr = validatePersonName(form.adminName);
-        if (nameErr) next.adminName = nameErr;
-
-        const emailErr = validateEmail(form.adminEmail);
+        const emailErr = validateEmail(companyForm.adminEmail);
         if (emailErr) next.adminEmail = emailErr;
 
-        const passErr = validatePassword(form.adminPassword);
+        const passErr = validatePassword(companyForm.adminPassword);
         if (passErr) next.adminPassword = passErr;
 
-        if (form.confirmPassword !== form.adminPassword) {
+        if (companyForm.confirmPassword !== companyForm.adminPassword) {
             next.confirmPassword = "Passwords do not match";
         }
 
@@ -102,24 +115,67 @@ export default function Setup() {
         return Object.keys(next).length === 0;
     }
 
-    async function handleSubmit(e) {
+    function validateEmployee() {
+        const next = {};
+        if (!employeeForm.companyId) next.companyId = "Please select a company";
+
+        const nameErr = validatePersonName(employeeForm.name);
+        if (nameErr) next.name = nameErr;
+
+        const emailErr = validateEmail(employeeForm.email);
+        if (emailErr) next.email = emailErr;
+
+        const passErr = validatePassword(employeeForm.password);
+        if (passErr) next.password = passErr;
+
+        if (employeeForm.confirmPassword !== employeeForm.password) {
+            next.confirmPassword = "Passwords do not match";
+        }
+
+        setErrors(next);
+        return Object.keys(next).length === 0;
+    }
+
+    async function handleCompanySubmit(e) {
         e.preventDefault();
-        if (!validate()) return;
+        if (!validateCompany()) return;
 
         setSubmitting(true);
         try {
-            await authApi.setup({
-                companyName: form.companyName.trim(),
-                companyAddress: form.companyAddress.trim(),
-                companyPhone: form.companyPhone.trim(),
-                adminName: form.adminName.trim(),
-                adminEmail: form.adminEmail.trim().toLowerCase(),
-                adminPassword: form.adminPassword,
+            const user = await registerCompany({
+                companyName: companyForm.companyName.trim(),
+                companyAddress: companyForm.companyAddress.trim(),
+                companyPhone: companyForm.companyPhone.trim(),
+                industry: companyForm.industry,
+                adminName: companyForm.adminName.trim(),
+                adminEmail: companyForm.adminEmail.trim().toLowerCase(),
+                adminPassword: companyForm.adminPassword,
             });
-            toast.success("Company created successfully. Please sign in.");
-            navigate("/login");
+            toast.success("Organization created successfully");
+            redirectByRole(user.role, navigate);
         } catch (err) {
-            toast.error(err.message || "Setup failed. Please try again.");
+            toast.error(err.message || "Failed to create company");
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    async function handleEmployeeSubmit(e) {
+        e.preventDefault();
+        if (!validateEmployee()) return;
+
+        setSubmitting(true);
+        try {
+            const user = await registerUser({
+                companyId: employeeForm.companyId,
+                name: employeeForm.name.trim(),
+                email: employeeForm.email.trim().toLowerCase(),
+                password: employeeForm.password,
+            });
+            toast.success("Account created successfully");
+            redirectByRole(user.role, navigate);
+        } catch (err) {
+            toast.error(err.message || "Registration failed");
         } finally {
             setSubmitting(false);
         }
@@ -128,150 +184,168 @@ export default function Setup() {
     return (
         <div className="min-h-screen grid lg:grid-cols-2 bg-background">
             {/* Left branding panel */}
-            <div className="hidden lg:flex flex-col justify-between bg-linear-to-br from-primary via-primary to-primary/80 text-primary-foreground p-12">
+            <div className="hidden lg:flex flex-col justify-between bg-linear-to-br from-primary via-primary/95 to-primary/80 text-primary-foreground p-12">
                 <div className="flex items-center gap-3">
                     <Logo size="md" />
-                    <span className="text-lg font-semibold">HCM Lite</span>
+                    <span className="text-xl font-bold tracking-tight">HCM Lite</span>
                 </div>
-                <div className="space-y-6 max-w-sm">
-                    <h1 className="text-3xl font-semibold leading-tight">
-                        Set up your company workspace
+                <div className="space-y-6 max-w-md">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-foreground/15 text-primary-foreground text-xs font-semibold backdrop-blur-xs">
+                        <Building2 className="h-3.5 w-3.5" />
+                        Multi-Company Architecture
+                    </div>
+                    <h1 className="text-3xl font-bold leading-tight">
+                        Create an organization or join your existing team
                     </h1>
-                    <ul className="space-y-3">
+                    <p className="text-primary-foreground/80 text-sm">
+                        Register multiple companies independently with their own custom work policies, departments, attendance, and payroll runs.
+                    </p>
+                    <ul className="space-y-3 pt-2">
                         {FEATURES.map((f) => (
                             <li key={f} className="flex items-start gap-3 text-sm text-primary-foreground/90">
-                                <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
+                                <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 text-primary-foreground/80" />
                                 <span>{f}</span>
                             </li>
                         ))}
                     </ul>
                 </div>
-                <p className="text-xs text-primary-foreground/70">
-                    Only one Administrator setup is required per company.
+                <p className="text-xs text-primary-foreground/60">
+                    Saylani Hackathon — HCM Lite Platform
                 </p>
             </div>
 
             {/* Right form panel */}
             <div className="flex items-center justify-center p-6 sm:p-10">
                 <div className="w-full max-w-md">
-                    <div className="lg:hidden flex items-center gap-3 mb-8">
+                    <div className="lg:hidden flex items-center gap-3 mb-6">
                         <Logo size="sm" />
-                        <span className="text-base font-semibold">HCM Lite</span>
+                        <span className="text-lg font-bold">HCM Lite</span>
                     </div>
 
-                    {checking ? (
-                        <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
-                            <Loader2 className="h-6 w-6 animate-spin" />
-                            <p className="text-sm">Checking setup status...</p>
-                        </div>
-                    ) : checkError ? (
-                        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 space-y-4">
-                            <div className="flex items-center gap-3 text-destructive">
-                                <AlertTriangle className="h-5 w-5" />
-                                <h2 className="font-semibold">Could not connect to server</h2>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{checkError}</p>
-                            <Button onClick={checkStatus} variant="outline" className="w-full">
-                                <RefreshCw className="h-4 w-4 mr-2" />
-                                Retry
-                            </Button>
-                        </div>
-                    ) : alreadySetup ? (
-                        <div className="rounded-xl border p-6 space-y-4 text-center">
-                            <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
-                                <Building2 className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <h2 className="font-semibold text-lg">Company already set up</h2>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    This workspace has already been configured. Please sign in to continue.
-                                </p>
-                            </div>
-                            <Link to="/login">
-                                <Button className="w-full">
-                                    Go to Sign In
-                                    <ArrowRight className="h-4 w-4 ml-2" />
-                                </Button>
-                            </Link>
-                        </div>
-                    ) : (
-                        <>
-                            <h2 className="text-2xl font-semibold tracking-tight">Create your company</h2>
+                    {/* Mode Toggle */}
+                    <div className="grid grid-cols-2 p-1 bg-muted rounded-xl mb-6">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setMode("company");
+                                setErrors({});
+                            }}
+                            className={`flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all ${
+                                mode === "company"
+                                    ? "bg-background text-foreground shadow-xs"
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            <Building2 className="h-4 w-4" />
+                            Register Company
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setMode("employee");
+                                setErrors({});
+                            }}
+                            className={`flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all ${
+                                mode === "employee"
+                                    ? "bg-background text-foreground shadow-xs"
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            <UserPlus className="h-4 w-4" />
+                            Join Existing Company
+                        </button>
+                    </div>
+
+                    {mode === "company" ? (
+                        <div>
+                            <h2 className="text-2xl font-bold tracking-tight">Create your company</h2>
                             <p className="text-sm text-muted-foreground mt-1 mb-6">
-                                This sets up your organization and the first Administrator account.
+                                Set up a new organization and configure its primary Administrator account.
                             </p>
 
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <section className="space-y-4">
-                                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                                        Company Details
+                            <form onSubmit={handleCompanySubmit} className="space-y-5">
+                                <div className="space-y-3.5">
+                                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        Organization Details
                                     </h3>
                                     <Field
                                         icon={Building2}
                                         label="Company Name"
-                                        value={form.companyName}
-                                        onChange={(v) => updateField("companyName", v)}
-                                        placeholder="Acme Corporation"
+                                        value={companyForm.companyName}
+                                        onChange={(v) => updateCompanyField("companyName", v)}
+                                        placeholder="e.g. Acme Corp"
                                         error={errors.companyName}
                                     />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Field
+                                            icon={Briefcase}
+                                            label="Industry"
+                                            value={companyForm.industry}
+                                            onChange={(v) => updateCompanyField("industry", v)}
+                                            placeholder="Technology"
+                                            error={errors.industry}
+                                        />
+                                        <Field
+                                            icon={Phone}
+                                            label="Phone (optional)"
+                                            value={companyForm.companyPhone}
+                                            onChange={(v) => updateCompanyField("companyPhone", v)}
+                                            placeholder="03001234567"
+                                            error={errors.companyPhone}
+                                        />
+                                    </div>
                                     <Field
                                         icon={MapPin}
-                                        label="Company Address"
-                                        value={form.companyAddress}
-                                        onChange={(v) => updateField("companyAddress", v)}
-                                        placeholder="123 Business Street, City"
+                                        label="Office Address (optional)"
+                                        value={companyForm.companyAddress}
+                                        onChange={(v) => updateCompanyField("companyAddress", v)}
+                                        placeholder="Main Boulevard, City"
                                         error={errors.companyAddress}
                                     />
-                                    <Field
-                                        icon={Phone}
-                                        label="Company Phone"
-                                        value={form.companyPhone}
-                                        onChange={(v) => updateField("companyPhone", v)}
-                                        placeholder="03001234567"
-                                        error={errors.companyPhone}
-                                    />
-                                </section>
+                                </div>
 
-                                <section className="space-y-4">
-                                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                                        Administrator Account
+                                <div className="space-y-3.5 pt-2 border-t">
+                                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        Administrator Credentials
                                     </h3>
                                     <Field
                                         icon={User}
                                         label="Full Name"
-                                        value={form.adminName}
-                                        onChange={(v) => updateField("adminName", v)}
-                                        placeholder="Jane Doe"
+                                        value={companyForm.adminName}
+                                        onChange={(v) => updateCompanyField("adminName", v)}
+                                        placeholder="e.g. Alex Johnson"
                                         error={errors.adminName}
                                     />
                                     <Field
                                         icon={Mail}
-                                        label="Email"
+                                        label="Work Email"
                                         type="email"
-                                        value={form.adminEmail}
-                                        onChange={(v) => updateField("adminEmail", v)}
-                                        placeholder="you@company.com"
+                                        value={companyForm.adminEmail}
+                                        onChange={(v) => updateCompanyField("adminEmail", v)}
+                                        placeholder="admin@company.com"
                                         error={errors.adminEmail}
                                     />
-                                    <Field
-                                        icon={Lock}
-                                        label="Password"
-                                        type="password"
-                                        value={form.adminPassword}
-                                        onChange={(v) => updateField("adminPassword", v)}
-                                        placeholder="Minimum 8 characters"
-                                        error={errors.adminPassword}
-                                    />
-                                    <Field
-                                        icon={Lock}
-                                        label="Confirm Password"
-                                        type="password"
-                                        value={form.confirmPassword}
-                                        onChange={(v) => updateField("confirmPassword", v)}
-                                        placeholder="Re-enter password"
-                                        error={errors.confirmPassword}
-                                    />
-                                </section>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Field
+                                            icon={Lock}
+                                            label="Password"
+                                            type="password"
+                                            value={companyForm.adminPassword}
+                                            onChange={(v) => updateCompanyField("adminPassword", v)}
+                                            placeholder="Min 8 characters"
+                                            error={errors.adminPassword}
+                                        />
+                                        <Field
+                                            icon={Lock}
+                                            label="Confirm"
+                                            type="password"
+                                            value={companyForm.confirmPassword}
+                                            onChange={(v) => updateCompanyField("confirmPassword", v)}
+                                            placeholder="Re-enter"
+                                            error={errors.confirmPassword}
+                                        />
+                                    </div>
+                                </div>
 
                                 <Button type="submit" className="w-full h-11" disabled={submitting}>
                                     {submitting ? (
@@ -279,18 +353,101 @@ export default function Setup() {
                                     ) : (
                                         <Building2 className="h-4 w-4 mr-2" />
                                     )}
-                                    Create Company
+                                    Create Organization Workspace
                                 </Button>
-
-                                <p className="text-center text-sm text-muted-foreground">
-                                    Already set up?{" "}
-                                    <Link to="/login" className="text-primary font-medium hover:underline">
-                                        Sign in
-                                    </Link>
-                                </p>
                             </form>
-                        </>
+                        </div>
+                    ) : (
+                        <div>
+                            <h2 className="text-2xl font-bold tracking-tight">Join an organization</h2>
+                            <p className="text-sm text-muted-foreground mt-1 mb-6">
+                                Sign up as an employee under an existing registered company.
+                            </p>
+
+                            <form onSubmit={handleEmployeeSubmit} className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium">Select Company</label>
+                                    <select
+                                        value={employeeForm.companyId}
+                                        onChange={(e) => updateEmployeeField("companyId", e.target.value)}
+                                        className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+                                    >
+                                        {companies.length === 0 ? (
+                                            <option value="">No companies registered yet</option>
+                                        ) : (
+                                            companies.map((c) => (
+                                                <option key={c._id} value={c._id}>
+                                                    {c.name} {c.address ? `(${c.address})` : ""}
+                                                </option>
+                                            ))
+                                        )}
+                                    </select>
+                                    {errors.companyId && <p className="text-xs text-destructive">{errors.companyId}</p>}
+                                </div>
+
+                                <Field
+                                    icon={User}
+                                    label="Your Full Name"
+                                    value={employeeForm.name}
+                                    onChange={(v) => updateEmployeeField("name", v)}
+                                    placeholder="e.g. Sarah Miller"
+                                    error={errors.name}
+                                />
+
+                                <Field
+                                    icon={Mail}
+                                    label="Work Email"
+                                    type="email"
+                                    value={employeeForm.email}
+                                    onChange={(v) => updateEmployeeField("email", v)}
+                                    placeholder="you@company.com"
+                                    error={errors.email}
+                                />
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Field
+                                        icon={Lock}
+                                        label="Password"
+                                        type="password"
+                                        value={employeeForm.password}
+                                        onChange={(v) => updateEmployeeField("password", v)}
+                                        placeholder="Min 8 characters"
+                                        error={errors.password}
+                                    />
+                                    <Field
+                                        icon={Lock}
+                                        label="Confirm"
+                                        type="password"
+                                        value={employeeForm.confirmPassword}
+                                        onChange={(v) => updateEmployeeField("confirmPassword", v)}
+                                        placeholder="Re-enter"
+                                        error={errors.confirmPassword}
+                                    />
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    className="w-full h-11"
+                                    disabled={submitting || companies.length === 0}
+                                >
+                                    {submitting ? (
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <UserPlus className="h-4 w-4 mr-2" />
+                                    )}
+                                    Create Employee Account
+                                </Button>
+                            </form>
+                        </div>
                     )}
+
+                    <div className="pt-6 mt-6 border-t text-center text-sm text-muted-foreground">
+                        Already have an account?{" "}
+                        <Link to="/login" className="text-primary font-medium hover:underline inline-flex items-center gap-1">
+                            <LogIn className="h-3.5 w-3.5" />
+                            Sign in
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>
