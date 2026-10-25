@@ -15,6 +15,7 @@ import HrLayout from "@/layouts/HrLayout";
 import EmployeeLayout from "@/layouts/EmployeeLayout";
 
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import OrgSetup from "@/pages/admin/OrgSetup";
 import HrDashboard from "@/pages/hr/HrDashboard";
 import EmployeeDashboard from "@/pages/employee/EmployeeDashboard";
 
