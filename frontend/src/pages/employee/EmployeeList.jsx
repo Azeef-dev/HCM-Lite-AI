@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge, statusBadge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/EmptyState";
+import DropdownSelect from "@/components/DropdownSelect";
 import { Search, UserPlus, Upload, Download, Users, Eye } from "lucide-react";
 
 export default function EmployeeList() {
@@ -55,6 +56,14 @@ export default function EmployeeList() {
         window.open(employeeApi.exportUrl(), "_blank");
     }
 
+    const departmentOptions = [{ value: "", label: "All Departments" }, ...departments.map((d) => ({ value: d._id, label: d.name }))];
+    const statusOptions = [
+        { value: "", label: "All Status" },
+        { value: "active", label: "Active" },
+        { value: "probation", label: "Probation" },
+        { value: "inactive", label: "Inactive" },
+    ];
+
     return (
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -79,7 +88,7 @@ export default function EmployeeList() {
 
             <Card>
                 <CardContent className="p-4 flex flex-wrap gap-3 items-center">
-                    <div className="relative flex-1 min-w-55">
+                    <div className="relative flex-1 min-w-[220px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Search by name, email or code…"
@@ -88,24 +97,8 @@ export default function EmployeeList() {
                             className="pl-9"
                         />
                     </div>
-                    <select
-                        value={department}
-                        onChange={(e) => { setPage(1); setDepartment(e.target.value); }}
-                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                    >
-                        <option value="">All Departments</option>
-                        {departments.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
-                    </select>
-                    <select
-                        value={status}
-                        onChange={(e) => { setPage(1); setStatus(e.target.value); }}
-                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                    >
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="probation">Probation</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
+                    <DropdownSelect value={department} onChange={(v) => { setPage(1); setDepartment(v); }} options={departmentOptions} placeholder="All Departments" />
+                    <DropdownSelect value={status} onChange={(v) => { setPage(1); setStatus(v); }} options={statusOptions} placeholder="All Status" />
                 </CardContent>
             </Card>
 
