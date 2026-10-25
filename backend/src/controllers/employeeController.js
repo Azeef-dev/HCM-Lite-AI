@@ -20,14 +20,27 @@ export const createEmployee = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: "Salary must be greater than 0" });
     }
 
-    const existingEmp = await Employee.findOne({ $or: [{ email: email.toLowerCase() }, { employeeCode }] });
+    const companyId = req.user?.companyId || null;
+
+    const existingEmp = await Employee.findOne({
+        ...(companyId ? { company: companyId } : {}),
+        $or: [{ email: email.toLowerCase() }, { employeeCode }],
+    });
     if (existingEmp) {
-        return res.status(409).json({ message: "Employee code or email already exists" });
+        return res.status(409).json({ message: "Employee code or email already exists in this organization" });
     }
 
     const employee = await Employee.create({
-        employeeCode, name, email: email.toLowerCase(), phone, address,
-        department, designation, dateOfJoining, gender,
+        company: companyId,
+        employeeCode,
+        name,
+        email: email.toLowerCase(),
+        phone,
+        address,
+        department: department || null,
+        designation: designation || null,
+        dateOfJoining,
+        gender: gender || "other",
         salary: { basic: Number(salary.basic) },
         status: "probation",
     });
@@ -38,11 +51,19 @@ export const createEmployee = asyncHandler(async (req, res) => {
         email: email.toLowerCase(),
         password: tempPassword,
         role: "employee",
+        company: companyId,
         employee: employee._id,
         mustChangePassword: true,
     });
 
-    await logAudit({ actor: req.user, action: "create", entity: "Employee", entityId: employee._id, after: employee });
+    await logAudit({
+        actor: req.user,
+        action: "create",
+        entity: "Employee",
+        entityId: employee._id,
+        after: employee,
+        companyId,
+    });
 
     res.status(201).json({ employee, login: { email: user.email, tempPassword } });
 });
@@ -51,13 +72,18 @@ export const createEmployee = asyncHandler(async (req, res) => {
 export const listEmployees = asyncHandler(async (req, res) => {
     const { search = "", department, status, page = 1, limit = 10 } = req.query;
     const filter = {};
+    if (req.user?.companyId) filter.company = req.user.companyId;
     if (search) filter.$text = { $search: search };
     if (department) filter.department = department;
     if (status) filter.status = status;
 
     const skip = (Number(page) - 1) * Number(limit);
     const [employees, total] = await Promise.all([
-        Employee.find(filter).populate("department designation").skip(skip).limit(Number(limit)).sort({ createdAt: -1 }),
+        Employee.find(filter)
+            .populate("department designation")
+            .skip(skip)
+            .limit(Number(limit))
+            .sort({ createdAt: -1 }),
         Employee.countDocuments(filter),
     ]);
 
@@ -89,10 +115,18 @@ export const updateEmployee = asyncHandler(async (req, res) => {
         // Employee can only change phone & address
         employee.phone = req.body.phone ?? employee.phone;
         employee.address = req.body.address ?? employee.address;
-    } else if (req.user.role === "hr") {
+    } else if (req.user.role === "hr" || req.user.role === "admin") {
         const before = employee.toObject();
         Object.assign(employee, req.body);
-        await logAudit({ actor: req.user, action: "update", entity: "Employee", entityId: employee._id, before, after: employee });
+        await logAudit({
+            actor: req.user,
+            action: "update",
+            entity: "Employee",
+            entityId: employee._id,
+            before,
+            after: employee,
+            companyId: req.user?.companyId,
+        });
     } else {
         return res.status(403).json({ message: "Forbidden" });
     }
@@ -105,12 +139,14 @@ export const updateEmployee = asyncHandler(async (req, res) => {
 export const importEmployeesCsv = asyncHandler(async (req, res) => {
     if (!req.file) return res.status(400).json({ message: "CSV file is required" });
 
+    const companyId = req.user?.companyId || null;
     const records = parse(req.file.buffer.toString(), { columns: true, skip_empty_lines: true, trim: true });
     const dryRun = req.query.dryRun === "true";
     const errors = [];
     const validRows = [];
 
-    const existingCodes = new Set((await Employee.find().select("employeeCode email")).flatMap((e) => [e.employeeCode, e.email]));
+    const existingEmployees = await Employee.find(companyId ? { company: companyId } : {}).select("employeeCode email");
+    const existingCodes = new Set(existingEmployees.flatMap((e) => [e.employeeCode, e.email]));
 
     records.forEach((row, idx) => {
         const rowNum = idx + 2; // account for header row
@@ -122,7 +158,7 @@ export const importEmployeesCsv = asyncHandler(async (req, res) => {
             errors.push({ row: rowNum, field: "email", reason: "Invalid email format" });
         }
         if ((row.employeeCode && existingCodes.has(row.employeeCode)) || (row.email && existingCodes.has(row.email))) {
-            errors.push({ row: rowNum, field: "employeeCode/email", reason: "Duplicate value" });
+            errors.push({ row: rowNum, field: "employeeCode/email", reason: "Duplicate value in organization" });
         }
         if (row.dateOfJoining && isNaN(Date.parse(row.dateOfJoining))) {
             errors.push({ row: rowNum, field: "dateOfJoining", reason: "Invalid ISO date" });
@@ -143,6 +179,7 @@ export const importEmployeesCsv = asyncHandler(async (req, res) => {
     for (const row of validRows) {
         const tempPassword = generateTempPassword();
         const employee = await Employee.create({
+            company: companyId,
             employeeCode: row.employeeCode,
             name: row.name,
             email: row.email.toLowerCase(),
@@ -153,6 +190,7 @@ export const importEmployeesCsv = asyncHandler(async (req, res) => {
             status: "probation",
         });
         await User.create({
+            company: companyId,
             name: row.name,
             email: row.email.toLowerCase(),
             password: tempPassword,
@@ -168,13 +206,14 @@ export const importEmployeesCsv = asyncHandler(async (req, res) => {
 
 // GET /api/employees/export -> CSV export
 export const exportEmployeesCsv = asyncHandler(async (req, res) => {
-    const employees = await Employee.find().populate("department designation");
+    const filter = req.user?.companyId ? { company: req.user.companyId } : {};
+    const employees = await Employee.find(filter).populate("department designation");
     const header = "employeeCode,name,email,phone,department,designation,dateOfJoining,status,basicSalary\n";
     const rows = employees.map((e) =>
         [
             e.employeeCode, e.name, e.email, e.phone || "",
             e.department?.name || "", e.designation?.title || "",
-            e.dateOfJoining.toISOString().split("T")[0], e.status, e.salary.basic,
+            e.dateOfJoining ? e.dateOfJoining.toISOString().split("T")[0] : "", e.status, e.salary?.basic || 0,
         ].join(",")
     );
     res.setHeader("Content-Type", "text/csv");
