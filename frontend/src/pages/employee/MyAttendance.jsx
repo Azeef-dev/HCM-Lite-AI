@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { attendanceApi } from "@/lib/api";
 import { formatTime, formatDate } from "@/lib/time";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge, statusBadge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import EmptyState from "@/components/EmptyState";
+import DropdownSelect from "@/components/DropdownSelect";
 import { Clock, LogIn, LogOut, CalendarClock, AlertCircle } from "lucide-react";
-import { validateFreeText, validateIsoDate } from "@/lib/validators";
+import { validateFreeText } from "@/lib/validators";
 
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -95,6 +97,9 @@ export default function MyAttendance() {
         }
     }
 
+    const monthOptions = months.map((m, i) => ({ value: String(i + 1), label: m }));
+    const yearOptions = [year - 1, year, year + 1].map((y) => ({ value: String(y), label: String(y) }));
+
     return (
         <div className="space-y-6">
             <div>
@@ -102,7 +107,7 @@ export default function MyAttendance() {
                 <p className="text-sm text-muted-foreground mt-0.5">Track your daily check-in/out and history</p>
             </div>
 
-            <Card className="bg-linear-to-br from-primary/5 to-accent/10 border-primary/20">
+            <Card className="bg-gradient-to-br from-primary/5 to-accent/10 border-primary/20">
                 <CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
@@ -128,15 +133,11 @@ export default function MyAttendance() {
             </Card>
 
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <CardHeader className="flex flex-row items-center justify-between pb-3 flex-wrap gap-2">
                     <CardTitle className="text-base flex items-center gap-2"><CalendarClock className="h-4 w-4 text-primary" /> Attendance History</CardTitle>
                     <div className="flex gap-2">
-                        <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
-                            {months.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
-                        </select>
-                        <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
-                            {[year - 1, year, year + 1].map((y) => <option key={y} value={y}>{y}</option>)}
-                        </select>
+                        <DropdownSelect value={String(month)} onChange={(v) => setMonth(Number(v))} options={monthOptions} size="sm" />
+                        <DropdownSelect value={String(year)} onChange={(v) => setYear(Number(v))} options={yearOptions} size="sm" triggerClassName="min-w-[90px]" />
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -191,7 +192,7 @@ export default function MyAttendance() {
                                                             </div>
                                                             <div>
                                                                 <label className="text-xs font-medium">Reason</label>
-                                                                <Input value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} placeholder="Explain why this correction is needed" />
+                                                                <Textarea value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} placeholder="Explain why this correction is needed" />
                                                                 {errors.reason && <p className="text-xs text-destructive mt-1">{errors.reason}</p>}
                                                             </div>
                                                             <div className="flex gap-2">
