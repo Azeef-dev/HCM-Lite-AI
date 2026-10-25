@@ -2,9 +2,10 @@ import mongoose from "mongoose";
 
 const employeeSchema = new mongoose.Schema(
     {
-        employeeCode: { type: String, required: true, unique: true },
+        company: { type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null },
+        employeeCode: { type: String, required: true },
         name: { type: String, required: true },
-        email: { type: String, required: true, unique: true, lowercase: true },
+        email: { type: String, required: true, lowercase: true },
         phone: { type: String },
         address: { type: String },
         department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
@@ -20,6 +21,8 @@ const employeeSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+employeeSchema.index({ company: 1, employeeCode: 1 });
+employeeSchema.index({ company: 1, email: 1 });
 employeeSchema.index({ name: "text", email: "text", employeeCode: "text" });
 
 export default mongoose.model("Employee", employeeSchema);
