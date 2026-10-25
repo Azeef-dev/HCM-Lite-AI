@@ -192,7 +192,7 @@ export default function AuditLog() {
                                             <td className="py-3 px-4 font-semibold text-foreground whitespace-nowrap">
                                                 {log.entity}
                                             </td>
-                                            <td className="py-3 px-4 text-xs font-mono text-muted-foreground max-w-[140px] truncate">
+                                            <td className="py-3 px-4 text-xs font-mono text-muted-foreground max-w-35 truncate">
                                                 {log.entityId || "N/A"}
                                             </td>
                                             <td className="py-3 px-4 text-right whitespace-nowrap">
