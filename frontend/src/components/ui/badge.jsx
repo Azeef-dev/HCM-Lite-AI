@@ -27,6 +27,7 @@ export function statusBadge(status) {
         active: "success", present: "success", approved: "success", finalized: "success",
         probation: "warning", late: "warning", pending: "warning", half_day: "warning",
         inactive: "destructive", rejected: "destructive", absent: "destructive", missing_checkout: "destructive",
+        cancelled: "muted",
     };
     return map[status] || "muted";
 }
