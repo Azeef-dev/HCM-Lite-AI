@@ -7,7 +7,12 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { normalizeDate, isLateCheckIn, isWorkingDay } from "../services/calendarService.js";
 import { logAudit } from "../services/auditService.js";
 
-const getCompany = async () => (await Company.findOne()) || {};
+const getCompany = async (req) => {
+    if (req?.user?.companyId) {
+        return (await Company.findById(req.user.companyId)) || (await Company.findOne()) || {};
+    }
+    return (await Company.findOne()) || {};
+};
 
 // POST /api/attendance/check-in
 export const checkIn = asyncHandler(async (req, res) => {
@@ -22,12 +27,13 @@ export const checkIn = asyncHandler(async (req, res) => {
         return res.status(409).json({ message: "Already checked in today" });
     }
 
-    const company = await getCompany();
+    const company = await getCompany(req);
     const late = isLateCheckIn(now, company.officeStartTime || "09:00", company.graceMinutes ?? 15);
 
     const record = existing
-        ? Object.assign(existing, { checkInTime: now, status: late ? "late" : "checked_in" })
+        ? Object.assign(existing, { checkInTime: now, status: late ? "late" : "checked_in", company: req.user.companyId })
         : new Attendance({
+            company: req.user.companyId || null,
             employee: employeeId,
             date: today,
             checkInTime: now,
@@ -52,7 +58,7 @@ export const checkOut = asyncHandler(async (req, res) => {
     }
 
     const now = new Date();
-    const company = await getCompany();
+    const company = await getCompany(req);
     const hours = (now - record.checkInTime) / (1000 * 60 * 60);
     const wasLate = isLateCheckIn(record.checkInTime, company.officeStartTime || "09:00", company.graceMinutes ?? 15);
 
@@ -63,6 +69,7 @@ export const checkOut = asyncHandler(async (req, res) => {
     record.checkOutTime = now;
     record.workingHours = Number(hours.toFixed(2));
     record.status = status;
+    if (req.user.companyId && !record.company) record.company = req.user.companyId;
     await record.save();
 
     res.json(record);
@@ -94,7 +101,12 @@ export const requestCorrection = asyncHandler(async (req, res) => {
     const day = normalizeDate(date);
     let record = await Attendance.findOne({ employee: employeeId, date: day });
     if (!record) {
-        record = new Attendance({ employee: employeeId, date: day, status: "checked_in" });
+        record = new Attendance({
+            company: req.user.companyId || null,
+            employee: employeeId,
+            date: day,
+            status: "checked_in",
+        });
     }
 
     if (record.correction?.status === "pending") {
@@ -108,13 +120,18 @@ export const requestCorrection = asyncHandler(async (req, res) => {
         reason,
         status: "pending",
     };
+    if (req.user.companyId && !record.company) record.company = req.user.companyId;
     await record.save();
     res.status(201).json(record);
 });
 
 // GET /api/attendance/corrections  (HR/Admin - pending list)
 export const listCorrections = asyncHandler(async (req, res) => {
-    const records = await Attendance.find({ "correction.status": "pending" })
+    const companyId = req.user?.companyId;
+    const filter = { "correction.status": "pending" };
+    if (companyId) filter.company = companyId;
+
+    const records = await Attendance.find(filter)
         .populate({ path: "employee", select: "name employeeCode department", populate: "department" })
         .sort({ "correction.requestedAt": -1 });
     res.json(records);
@@ -131,7 +148,7 @@ export const reviewCorrection = asyncHandler(async (req, res) => {
     const before = record.toObject();
 
     if (decision === "approved") {
-        const company = await getCompany();
+        const company = await getCompany(req);
         if (record.correction.requestedCheckIn) record.checkInTime = record.correction.requestedCheckIn;
         if (record.correction.requestedCheckOut) record.checkOutTime = record.correction.requestedCheckOut;
 
@@ -151,7 +168,15 @@ export const reviewCorrection = asyncHandler(async (req, res) => {
     record.correction.reviewedAt = new Date();
 
     await record.save();
-    await logAudit({ actor: req.user, action: "approve", entity: "AttendanceCorrection", entityId: record._id, before, after: record });
+    await logAudit({
+        actor: req.user,
+        action: "approve",
+        entity: "AttendanceCorrection",
+        entityId: record._id,
+        before,
+        after: record,
+        companyId: req.user?.companyId,
+    });
 
     res.json(record);
 });
@@ -160,16 +185,23 @@ export const reviewCorrection = asyncHandler(async (req, res) => {
 export const getAttendanceBoard = asyncHandler(async (req, res) => {
     const { date, department } = req.query;
     const day = normalizeDate(date || new Date());
+    const companyId = req.user?.companyId;
 
     const empFilter = { status: { $ne: "inactive" } };
+    if (companyId) empFilter.company = companyId;
     if (department) empFilter.department = department;
 
     const [employees, records, approvedLeaves, company, holidays] = await Promise.all([
         Employee.find(empFilter).populate("department designation"),
-        Attendance.find({ date: day }),
-        LeaveRequest.find({ status: "approved", startDate: { $lte: day }, endDate: { $gte: day } }),
-        getCompany(),
-        Holiday.find(),
+        Attendance.find({ date: day, ...(companyId ? { company: companyId } : {}) }),
+        LeaveRequest.find({
+            status: "approved",
+            startDate: { $lte: day },
+            endDate: { $gte: day },
+            ...(companyId ? { company: companyId } : {}),
+        }),
+        getCompany(req),
+        Holiday.find(companyId ? { company: companyId } : {}),
     ]);
 
     const recordMap = new Map(records.map((r) => [r.employee.toString(), r]));
