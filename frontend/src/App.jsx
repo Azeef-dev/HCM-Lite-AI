@@ -29,6 +29,10 @@ import CorrectionRequests from "@/pages/attendance/CorrectionRequests";
 
 import MyLeave from "@/pages/employee/MyLeave";
 import LeaveInbox from "@/pages/leave/LeaveInbox";
+import PayrollRuns from "@/pages/payroll/PayrollRuns";
+import PayrollRunDetail from "@/pages/payroll/PayrollRunDetail";
+import MyPayslips from "@/pages/employee/MyPayslips";
+import AiAssistant from "@/pages/ai/AiAssistant";
 
 function RootRedirect() {
   const { user, loading } = useAuth();
