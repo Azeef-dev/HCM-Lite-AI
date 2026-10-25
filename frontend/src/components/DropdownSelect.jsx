@@ -27,7 +27,7 @@ export default function DropdownSelect({
                     variant="outline"
                     size={size === "sm" ? "sm" : "default"}
                     className={cn(
-                        "justify-between font-normal min-w-[150px] bg-background",
+                        "justify-between font-normal min-w-37.5 bg-background",
                         size === "sm" ? "h-9" : "h-10",
                         triggerClassName
                     )}
@@ -38,7 +38,7 @@ export default function DropdownSelect({
                     <ChevronDown className="h-4 w-4 opacity-50 ml-2 shrink-0" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className={cn("min-w-[200px] max-h-72 overflow-y-auto", className)} align="start">
+            <DropdownMenuContent className={cn("min-w-50 max-h-72 overflow-y-auto", className)} align="start">
                 {options.map((o) => (
                     <DropdownMenuItem
                         key={o.value}
