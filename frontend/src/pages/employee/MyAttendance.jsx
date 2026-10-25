@@ -107,7 +107,7 @@ export default function MyAttendance() {
                 <p className="text-sm text-muted-foreground mt-0.5">Track your daily check-in/out and history</p>
             </div>
 
-            <Card className="bg-gradient-to-br from-primary/5 to-accent/10 border-primary/20">
+            <Card className="bg-linear-to-br from-primary/5 to-accent/10 border-primary/20">
                 <CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
