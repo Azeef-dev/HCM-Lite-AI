@@ -57,7 +57,7 @@ export default function Login() {
     return (
         <div className="min-h-screen grid lg:grid-cols-2 bg-background">
             {/* Left branding panel */}
-            <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground p-12">
+            <div className="hidden lg:flex flex-col justify-between bg-linear-to-br from-primary via-primary to-primary/80 text-primary-foreground p-12">
                 <div className="flex items-center gap-3">
                     <Logo size="md" />
                     <span className="text-lg font-semibold">HCM Lite</span>
