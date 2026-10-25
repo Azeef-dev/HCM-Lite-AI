@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DropdownSelect from "@/components/DropdownSelect";
 import {
     validateCode, validatePersonName, validateEmail, validatePhone,
     validateFreeText, validateIsoDate, validatePositiveNumber,
@@ -35,6 +36,10 @@ export default function EmployeeCreate() {
 
     function handleChange(e) {
         setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    }
+
+    function setField(name, value) {
+        setForm((f) => ({ ...f, [name]: value }));
     }
 
     function validate() {
@@ -86,9 +91,12 @@ export default function EmployeeCreate() {
         }
     }
 
+    const departmentOptions = [{ value: "", label: "Select department" }, ...departments.map((d) => ({ value: d._id, label: d.name }))];
     const filteredDesignations = form.department
         ? designations.filter((d) => (d.department?._id || d.department) === form.department)
         : designations;
+    const designationOptions = [{ value: "", label: "Select designation" }, ...filteredDesignations.map((d) => ({ value: d._id, label: d.title }))];
+    const genderOptions = [{ value: "male", label: "Male" }, { value: "female", label: "Female" }, { value: "other", label: "Other" }];
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
@@ -113,15 +121,21 @@ export default function EmployeeCreate() {
                         </div>
                         <Field label="Address (optional)" name="address" value={form.address} onChange={handleChange} error={errors.address} placeholder="House 12, Street 5, Karachi" />
                         <div className="grid sm:grid-cols-2 gap-4">
-                            <SelectField label="Department" name="department" value={form.department} onChange={handleChange}
-                                options={departments.map((d) => ({ value: d._id, label: d.name }))} placeholder="Select department" />
-                            <SelectField label="Designation" name="designation" value={form.designation} onChange={handleChange}
-                                options={filteredDesignations.map((d) => ({ value: d._id, label: d.title }))} placeholder="Select designation" />
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium">Department</label>
+                                <DropdownSelect value={form.department} onChange={(v) => setField("department", v)} options={departmentOptions} placeholder="Select department" triggerClassName="w-full" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium">Designation</label>
+                                <DropdownSelect value={form.designation} onChange={(v) => setField("designation", v)} options={designationOptions} placeholder="Select designation" triggerClassName="w-full" />
+                            </div>
                         </div>
                         <div className="grid sm:grid-cols-3 gap-4">
                             <Field label="Date of Joining" name="dateOfJoining" type="date" value={form.dateOfJoining} onChange={handleChange} error={errors.dateOfJoining} />
-                            <SelectField label="Gender" name="gender" value={form.gender} onChange={handleChange}
-                                options={[{ value: "male", label: "Male" }, { value: "female", label: "Female" }, { value: "other", label: "Other" }]} />
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium">Gender</label>
+                                <DropdownSelect value={form.gender} onChange={(v) => setField("gender", v)} options={genderOptions} triggerClassName="w-full" />
+                            </div>
                             <Field label="Basic Salary" name="basic" type="number" value={form.basic} onChange={handleChange} error={errors.basic} placeholder="50000" />
                         </div>
                     </CardContent>
@@ -142,21 +156,6 @@ function Field({ label, name, value, onChange, error, type = "text", placeholder
             <label className="text-sm font-medium" htmlFor={name}>{label}</label>
             <Input id={name} name={name} type={type} value={value} onChange={onChange} placeholder={placeholder} autoComplete="off" />
             {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
-    );
-}
-
-function SelectField({ label, name, value, onChange, options, placeholder }) {
-    return (
-        <div className="space-y-1.5">
-            <label className="text-sm font-medium" htmlFor={name}>{label}</label>
-            <select
-                id={name} name={name} value={value} onChange={onChange}
-                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
-            >
-                {placeholder && <option value="">{placeholder}</option>}
-                {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
         </div>
     );
 }
