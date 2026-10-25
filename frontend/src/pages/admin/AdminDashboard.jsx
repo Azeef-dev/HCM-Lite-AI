@@ -1,24 +1,56 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { dashboardApi } from "@/lib/api";
+import { dashboardApi, aiApi } from "@/lib/api";
 import { toArray, safe } from "@/lib/normalize";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import StatCard from "@/components/StatCard";
 import EmptyState from "@/components/EmptyState";
-import { Users, TrendingDown, Wallet, Banknote, Building2, PieChart, History } from "lucide-react";
+import {
+    Users,
+    TrendingDown,
+    Wallet,
+    Banknote,
+    Building2,
+    PieChart,
+    History,
+    Sparkles,
+    Loader2,
+} from "lucide-react";
 
 export default function AdminDashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [aiSummary, setAiSummary] = useState(null);
+    const [summarizing, setSummarizing] = useState(false);
+
     useEffect(() => {
         dashboardApi.admin()
             .then(setData)
-            .catch((err) => { setError(err.message || "Failed to load dashboard"); toast.error(err.message || "Failed to load dashboard"); })
+            .catch((err) => {
+                setError(err.message || "Failed to load dashboard");
+                toast.error(err.message || "Failed to load dashboard");
+            })
             .finally(() => setLoading(false));
     }, []);
+
+    async function handleGenerateAiSummary() {
+        if (!data?.kpis) return;
+        setSummarizing(true);
+        try {
+            const res = await aiApi.dashboardSummary(data.kpis);
+            const content = res?.summary || res?.data?.summary || res?.answer || "No summary available.";
+            setAiSummary(content);
+            toast.success("AI summary generated");
+        } catch (err) {
+            toast.error(err.message || "Failed to generate AI summary");
+        } finally {
+            setSummarizing(false);
+        }
+    }
 
     if (loading) return <DashboardSkeleton />;
     if (error) return <p className="text-sm text-destructive">{error}</p>;
@@ -31,23 +63,55 @@ export default function AdminDashboard() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                <p className="text-sm text-muted-foreground mt-0.5">Company-wide overview & analytics</p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
+                    <p className="text-sm text-muted-foreground mt-0.5">Company-wide overview & executive analytics</p>
+                </div>
+                <Button
+                    onClick={handleGenerateAiSummary}
+                    disabled={summarizing}
+                    variant="outline"
+                    className="gap-2 border-primary/30 text-primary hover:bg-primary/5"
+                >
+                    {summarizing ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <Sparkles className="h-4 w-4" />
+                    )}
+                    {aiSummary ? "Refresh AI Summary" : "Generate AI Summary"}
+                </Button>
             </div>
 
+            {/* AI Summary Banner */}
+            {aiSummary && (
+                <Card className="border-primary/30 bg-primary/5 shadow-xs animate-in fade-in duration-200">
+                    <CardHeader className="pb-2 flex flex-row items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        <CardTitle className="text-sm font-semibold text-primary">
+                            AI Executive Summary
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
+                            {aiSummary}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard label="Headcount" value={safe(data.headcount, 0)} icon={Users} color="primary" />
-                <StatCard label="Attrition YTD" value={`${safe(data.attritionYtd, 0)}%`} icon={TrendingDown} color="warning" />
-                <StatCard label="Payroll Cost YTD" value={`Rs ${Number(safe(data.payrollCostYtd, 0)).toLocaleString()}`} icon={Wallet} color="success" />
-                <StatCard label="Avg Salary" value={`Rs ${Number(safe(data.avgSalary, 0)).toLocaleString()}`} icon={Banknote} color="info" />
+                <StatCard label="Headcount" value={safe(data.kpis?.headcount ?? data.headcount, 0)} icon={Users} color="primary" />
+                <StatCard label="Attrition YTD" value={`${safe(data.kpis?.attritionYtd ?? data.attritionYtd, 0)}%`} icon={TrendingDown} color="warning" />
+                <StatCard label="Payroll Cost YTD" value={`Rs ${Number(safe(data.kpis?.payrollCostYtd ?? data.payrollCostYtd, 0)).toLocaleString()}`} icon={Wallet} color="success" />
+                <StatCard label="Avg Salary" value={`Rs ${Number(safe(data.kpis?.avgSalary ?? data.avgSalary, 0)).toLocaleString()}`} icon={Banknote} color="info" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
+                <Card className="shadow-xs">
                     <CardHeader className="flex flex-row items-center gap-2 pb-3">
                         <Building2 className="h-4 w-4 text-primary" />
-                        <CardTitle className="text-base">Headcount by Department</CardTitle>
+                        <CardTitle className="text-base font-semibold">Headcount by Department</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {deptList.length === 0 ? (
@@ -74,10 +138,10 @@ export default function AdminDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="shadow-xs">
                     <CardHeader className="flex flex-row items-center gap-2 pb-3">
                         <PieChart className="h-4 w-4 text-primary" />
-                        <CardTitle className="text-base">Gender Split</CardTitle>
+                        <CardTitle className="text-base font-semibold">Gender Distribution</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {genderList.length === 0 ? (
@@ -96,10 +160,10 @@ export default function AdminDashboard() {
                 </Card>
             </div>
 
-            <Card>
+            <Card className="shadow-xs">
                 <CardHeader className="flex flex-row items-center gap-2 pb-3">
                     <History className="h-4 w-4 text-primary" />
-                    <CardTitle className="text-base">Recent Audit Activity</CardTitle>
+                    <CardTitle className="text-base font-semibold">Recent Audit Activity</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {auditList.length === 0 ? (
@@ -109,7 +173,7 @@ export default function AdminDashboard() {
                             {auditList.map((a, i) => (
                                 <div key={a._id || i} className="flex items-center justify-between text-sm py-2.5 border-b last:border-0">
                                     <div>
-                                        <span className="font-medium">{a.actorName || "Unknown"}</span>{" "}
+                                        <span className="font-medium">{a.actorName || "Admin"}</span>{" "}
                                         <span className="text-muted-foreground">{a.action} {a.entity}</span>
                                     </div>
                                     <span className="text-xs text-muted-foreground shrink-0">
