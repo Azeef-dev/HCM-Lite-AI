@@ -9,13 +9,21 @@ import { createNotification } from "../services/notificationService.js";
 
 export const createPayrollRun = asyncHandler(async (req, res) => {
     const { month, year } = req.body;
-    const run = await generatePayrollDraft(Number(month), Number(year), req.user);
-    await logAudit({ actor: req.user, action: "create", entity: "PayrollRun", entityId: run._id, after: run });
+    const run = await generatePayrollDraft(Number(month), Number(year), req.user, req.user.companyId);
+    await logAudit({
+        actor: req.user,
+        action: "create",
+        entity: "PayrollRun",
+        entityId: run._id,
+        after: run,
+        companyId: req.user.companyId,
+    });
     res.status(201).json(run);
 });
 
 export const listPayrollRuns = asyncHandler(async (req, res) => {
-    const runs = await PayrollRun.find().sort({ year: -1, month: -1 });
+    const filter = req.user?.companyId ? { company: req.user.companyId } : {};
+    const runs = await PayrollRun.find(filter).sort({ year: -1, month: -1 });
     res.json(runs);
 });
 
@@ -38,7 +46,15 @@ export const finalizePayrollRun = asyncHandler(async (req, res) => {
     run.finalizedAt = new Date();
     await run.save();
 
-    await logAudit({ actor: req.user, action: "finalize", entity: "PayrollRun", entityId: run._id, before, after: run });
+    await logAudit({
+        actor: req.user,
+        action: "finalize",
+        entity: "PayrollRun",
+        entityId: run._id,
+        before,
+        after: run,
+        companyId: req.user?.companyId,
+    });
 
     const payslips = await Payslip.find({ payrollRun: run._id }).populate("employee");
     for (const slip of payslips) {
@@ -49,6 +65,7 @@ export const finalizePayrollRun = asyncHandler(async (req, res) => {
                 title: "Payslip available",
                 message: `Your payslip for ${run.month}/${run.year} is ready.`,
                 type: "payslip",
+                company: req.user?.companyId,
             });
         }
     }
@@ -58,26 +75,22 @@ export const finalizePayrollRun = asyncHandler(async (req, res) => {
 
 export const getMyPayslips = asyncHandler(async (req, res) => {
     const slips = await Payslip.find({ employee: req.user.employeeId })
-        .populate({ path: "payrollRun", match: { status: "finalized" } })
+        .populate("payrollRun", "status")
         .sort({ year: -1, month: -1 });
-
-    res.json(slips.filter((s) => s.payrollRun));
+    res.json(slips);
 });
 
 export const downloadPayslipPdf = asyncHandler(async (req, res) => {
-    const slip = await Payslip.findById(req.params.id).populate("employee").populate("payrollRun");
-    if (!slip) return res.status(404).json({ message: "Not found" });
+    const payslip = await Payslip.findById(req.params.id).populate("employee payrollRun");
+    if (!payslip) return res.status(404).json({ message: "Not found" });
 
-    if (req.user.role === "employee") {
-        if (slip.employee._id.toString() !== req.user.employeeId) {
-            return res.status(403).json({ message: "Forbidden" });
-        }
-        if (slip.payrollRun.status !== "finalized") {
-            return res.status(403).json({ message: "Payslip not finalized yet" });
-        }
+    if (req.user.role === "employee" && req.user.employeeId !== payslip.employee._id.toString()) {
+        return res.status(403).json({ message: "Forbidden" });
     }
 
+    const doc = generatePayslipPdf(payslip, payslip.employee);
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename=payslip-${slip.employee.employeeCode}-${slip.month}-${slip.year}.pdf`);
-    generatePayslipPdf(slip, res);
+    res.setHeader("Content-Disposition", `inline; filename=payslip-${payslip.month}-${payslip.year}.pdf`);
+    doc.pipe(res);
+    doc.end();
 });
