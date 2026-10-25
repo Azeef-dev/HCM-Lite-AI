@@ -4,14 +4,15 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/Logo";
-import { Mail, Lock, Loader2, CheckCircle2, LogIn } from "lucide-react";
+import { Mail, Lock, Loader2, CheckCircle2, LogIn, Building2, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import { validateEmail } from "@/lib/validators";
 
 const FEATURES = [
-    "Role-based dashboards for Admin, HR and Employees",
-    "Attendance, leave and payroll in one place",
-    "AI assistant for instant answers about your HR data",
+    "Multi-company enterprise Human Capital Management",
+    "Role-based portals for Administrators, HR teams, and Employees",
+    "Attendance tracking, leave workflow, and one-click payroll",
+    "AI assistant answering from real company data with tools",
 ];
 
 export function redirectByRole(role, navigate) {
@@ -45,7 +46,7 @@ export default function Login() {
         setSubmitting(true);
         try {
             const user = await login(email.trim().toLowerCase(), password);
-            toast.success("Welcome back");
+            toast.success(`Welcome back, ${user.name}`);
             redirectByRole(user.role, navigate);
         } catch (err) {
             toast.error(err.message || "Invalid email or password");
@@ -57,26 +58,33 @@ export default function Login() {
     return (
         <div className="min-h-screen grid lg:grid-cols-2 bg-background">
             {/* Left branding panel */}
-            <div className="hidden lg:flex flex-col justify-between bg-linear-to-br from-primary via-primary to-primary/80 text-primary-foreground p-12">
+            <div className="hidden lg:flex flex-col justify-between bg-linear-to-br from-primary via-primary/95 to-primary/80 text-primary-foreground p-12">
                 <div className="flex items-center gap-3">
                     <Logo size="md" />
-                    <span className="text-lg font-semibold">HCM Lite</span>
+                    <span className="text-xl font-bold tracking-tight">HCM Lite</span>
                 </div>
-                <div className="space-y-6 max-w-sm">
-                    <h1 className="text-3xl font-semibold leading-tight">
-                        AI-assisted HR management, simplified
+                <div className="space-y-6 max-w-md">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-foreground/15 text-primary-foreground text-xs font-semibold backdrop-blur-xs">
+                        <Building2 className="h-3.5 w-3.5" />
+                        Multi-Company Platform
+                    </div>
+                    <h1 className="text-4xl font-bold leading-tight">
+                        Modern Human Capital Management, powered by AI
                     </h1>
-                    <ul className="space-y-3">
+                    <p className="text-primary-foreground/80 text-sm">
+                        Seamlessly operate organizations of any scale with automated attendance, approval workflows, and transparent analytics.
+                    </p>
+                    <ul className="space-y-3 pt-2">
                         {FEATURES.map((f) => (
                             <li key={f} className="flex items-start gap-3 text-sm text-primary-foreground/90">
-                                <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
+                                <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 text-primary-foreground/80" />
                                 <span>{f}</span>
                             </li>
                         ))}
                     </ul>
                 </div>
-                <p className="text-xs text-primary-foreground/70">
-                    Built for Saylani Hackathon — HCM Lite
+                <p className="text-xs text-primary-foreground/60">
+                    Saylani Hackathon — HCM Lite Platform
                 </p>
             </div>
 
@@ -85,17 +93,17 @@ export default function Login() {
                 <div className="w-full max-w-sm">
                     <div className="lg:hidden flex items-center gap-3 mb-8">
                         <Logo size="sm" />
-                        <span className="text-base font-semibold">HCM Lite</span>
+                        <span className="text-lg font-bold">HCM Lite</span>
                     </div>
 
-                    <h2 className="text-2xl font-semibold tracking-tight">Sign in to your account</h2>
+                    <h2 className="text-2xl font-bold tracking-tight">Sign in to your account</h2>
                     <p className="text-sm text-muted-foreground mt-1 mb-6">
-                        Enter your credentials to access your dashboard.
+                        Enter your credentials to access your organization dashboard.
                     </p>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium">Email</label>
+                            <label className="text-sm font-medium">Work Email</label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
@@ -139,12 +147,15 @@ export default function Login() {
                             Sign In
                         </Button>
 
-                        <p className="text-center text-sm text-muted-foreground">
-                            Setting up for the first time?{" "}
-                            <Link to="/setup" className="text-primary font-medium hover:underline">
-                                Create company
-                            </Link>
-                        </p>
+                        <div className="pt-4 border-t space-y-2 text-center text-sm">
+                            <p className="text-muted-foreground">
+                                Need a workspace for your company?{" "}
+                                <Link to="/signup" className="text-primary font-medium hover:underline inline-flex items-center gap-1">
+                                    <Building2 className="h-3.5 w-3.5" />
+                                    Register Company
+                                </Link>
+                            </p>
+                        </div>
                     </form>
                 </div>
             </div>
