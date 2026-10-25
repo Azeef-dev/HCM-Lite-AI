@@ -16,3 +16,5 @@ router.put("/notifications/:id/read", comms.markNotificationRead);
 router.get("/audit", requireRole("admin"), comms.getAuditLog);
 
 export default router;
+
+export default router;
