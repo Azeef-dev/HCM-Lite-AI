@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
-import { validateEmail, validatePassword } from "@/lib/validators";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/Logo";
-import { Sparkles, Users, Clock, Wallet, Mail, Lock } from "lucide-react";
+import { Mail, Lock, Loader2, CheckCircle2, LogIn } from "lucide-react";
+import toast from "react-hot-toast";
+import { validateEmail } from "@/lib/validators";
+
+const FEATURES = [
+    "Role-based dashboards for Admin, HR and Employees",
+    "Attendance, leave and payroll in one place",
+    "AI assistant for instant answers about your HR data",
+];
 
 export function redirectByRole(role, navigate) {
     if (role === "admin") navigate("/admin", { replace: true });
@@ -14,48 +20,35 @@ export function redirectByRole(role, navigate) {
     else navigate("/employee", { replace: true });
 }
 
-const features = [
-    { icon: Users, text: "Manage employees, departments & roles" },
-    { icon: Clock, text: "Track attendance with smart grace rules" },
-    { icon: Wallet, text: "Automated payroll & tax calculation" },
-    { icon: Sparkles, text: "AI assistant for instant HR insights" },
-];
-
 export default function Login() {
-    const { login } = useAuth();
     const navigate = useNavigate();
-    const [form, setForm] = useState({ email: "", password: "" });
+    const { login } = useAuth();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
 
-    function handleChange(e) {
-        setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-    }
-
     function validate() {
-        const e = {};
-        const emailErr = validateEmail(form.email);
-        if (emailErr) e.email = emailErr;
-        const passErr = validatePassword(form.password, { strong: false });
-        if (passErr) e.password = passErr;
-        setErrors(e);
-        return Object.keys(e).length === 0;
+        const next = {};
+        const emailErr = validateEmail(email);
+        if (emailErr) next.email = emailErr;
+        if (!password || password.includes(" ")) {
+            next.password = "Password is required and cannot contain spaces";
+        }
+        setErrors(next);
+        return Object.keys(next).length === 0;
     }
 
-    async function handleSubmit(ev) {
-        ev.preventDefault();
+    async function handleSubmit(e) {
+        e.preventDefault();
         if (!validate()) return;
         setSubmitting(true);
         try {
-            const user = await login(form.email.trim(), form.password);
-            toast.success(`Welcome back, ${user.name}`);
-            if (user.mustChangePassword) {
-                navigate("/change-password", { replace: true });
-                return;
-            }
+            const user = await login(email.trim().toLowerCase(), password);
+            toast.success("Welcome back");
             redirectByRole(user.role, navigate);
         } catch (err) {
-            toast.error(err.message || "Login failed");
+            toast.error(err.message || "Invalid email or password");
         } finally {
             setSubmitting(false);
         }
@@ -64,83 +57,86 @@ export default function Login() {
     return (
         <div className="min-h-screen grid lg:grid-cols-2 bg-background">
             {/* Left branding panel */}
-            <div className="hidden lg:flex flex-col justify-between relative overflow-hidden bg-linear-to-br from-primary via-primary to-accent p-12 text-primary-foreground">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.15),transparent_40%)]" />
-                <div className="relative flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center">
-                        <Sparkles className="h-5 w-5" />
-                    </div>
-                    <span className="text-xl font-bold tracking-tight">HCM Lite</span>
+            <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground p-12">
+                <div className="flex items-center gap-3">
+                    <Logo size="md" />
+                    <span className="text-lg font-semibold">HCM Lite</span>
                 </div>
-
-                <div className="relative space-y-8">
-                    <div>
-                        <h1 className="text-4xl font-bold leading-tight mb-3">
-                            AI-Assisted HR,<br />made simple.
-                        </h1>
-                        <p className="text-primary-foreground/80 text-sm max-w-sm">
-                            One platform for attendance, leave, payroll and analytics —
-                            built for Admin, HR and Employees alike.
-                        </p>
-                    </div>
-                    <div className="space-y-4">
-                        {features.map((f) => (
-                            <div key={f.text} className="flex items-center gap-3">
-                                <div className="h-9 w-9 rounded-lg bg-white/10 backdrop-blur flex items-center justify-center shrink-0">
-                                    <f.icon className="h-4 w-4" />
-                                </div>
-                                <span className="text-sm text-primary-foreground/90">{f.text}</span>
-                            </div>
+                <div className="space-y-6 max-w-sm">
+                    <h1 className="text-3xl font-semibold leading-tight">
+                        AI-assisted HR management, simplified
+                    </h1>
+                    <ul className="space-y-3">
+                        {FEATURES.map((f) => (
+                            <li key={f} className="flex items-start gap-3 text-sm text-primary-foreground/90">
+                                <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
+                                <span>{f}</span>
+                            </li>
                         ))}
-                    </div>
+                    </ul>
                 </div>
-
-                <p className="relative text-xs text-primary-foreground/60">
-                    © {new Date().getFullYear()} HCM Lite — Saylani Hackathon
+                <p className="text-xs text-primary-foreground/70">
+                    Built for Saylani Hackathon — HCM Lite
                 </p>
             </div>
 
             {/* Right form panel */}
             <div className="flex items-center justify-center p-6 sm:p-10">
                 <div className="w-full max-w-sm">
-                    <div className="flex lg:hidden justify-center mb-6">
-                        <Logo size="lg" />
+                    <div className="lg:hidden flex items-center gap-3 mb-8">
+                        <Logo size="sm" />
+                        <span className="text-base font-semibold">HCM Lite</span>
                     </div>
 
-                    <div className="mb-8 text-center lg:text-left">
-                        <h2 className="text-2xl font-bold">Sign in to your account</h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Enter your credentials to access your dashboard
-                        </p>
-                    </div>
+                    <h2 className="text-2xl font-semibold tracking-tight">Sign in to your account</h2>
+                    <p className="text-sm text-muted-foreground mt-1 mb-6">
+                        Enter your credentials to access your dashboard.
+                    </p>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium" htmlFor="email">Email</label>
+                            <label className="text-sm font-medium">Email</label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    id="email" name="email" type="email" value={form.email} onChange={handleChange}
-                                    autoComplete="username" placeholder="you@company.com" className="pl-9"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        setErrors((p) => ({ ...p, email: undefined }));
+                                    }}
+                                    placeholder="you@company.com"
+                                    className="pl-9 h-11"
                                 />
                             </div>
                             {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium" htmlFor="password">Password</label>
+                            <label className="text-sm font-medium">Password</label>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    id="password" name="password" type="password" value={form.password} onChange={handleChange}
-                                    autoComplete="current-password" placeholder="••••••••" className="pl-9"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        setErrors((p) => ({ ...p, password: undefined }));
+                                    }}
+                                    placeholder="Enter your password"
+                                    className="pl-9 h-11"
                                 />
                             </div>
                             {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
                         </div>
 
-                        <Button type="submit" className="w-full h-11 text-base" disabled={submitting}>
-                            {submitting ? "Signing in…" : "Sign In"}
+                        <Button type="submit" className="w-full h-11" disabled={submitting}>
+                            {submitting ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <LogIn className="h-4 w-4 mr-2" />
+                            )}
+                            Sign In
                         </Button>
 
                         <p className="text-center text-sm text-muted-foreground">
