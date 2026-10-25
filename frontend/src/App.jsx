@@ -88,6 +88,9 @@ export default function App() {
             <Route path="/hr/employees/new" element={<EmployeeCreate />} />
             <Route path="/hr/employees/import" element={<EmployeeImport />} />
             <Route path="/hr/employees/:id" element={<EmployeeDetail />} />
+            <Route path="/hr/payroll" element={<PayrollRuns />} />
+            <Route path="/hr/payroll/:id" element={<PayrollRunDetail />} />
+            <Route path="/hr/ai" element={<AiAssistant />} />
 
             <Route path="/hr/attendance" element={<AttendanceBoard />} />
             <Route path="/hr/attendance/corrections" element={<CorrectionRequests />} />
