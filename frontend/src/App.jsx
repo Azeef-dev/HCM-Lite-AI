@@ -8,7 +8,6 @@ import Setup from "@/pages/Setup";
 import ChangePassword from "@/pages/ChangePassword";
 import Unauthorized from "@/pages/Unauthorized";
 import NotFound from "@/pages/NotFound";
-import Placeholder from "@/pages/Placeholder";
 
 import AdminLayout from "@/layouts/AdminLayout";
 import HrLayout from "@/layouts/HrLayout";
@@ -35,8 +34,10 @@ import PayrollRunDetail from "@/pages/payroll/PayrollRunDetail";
 import MyPayslips from "@/pages/employee/MyPayslips";
 
 import AiAssistant from "@/pages/ai/AiAssistant";
-
 import OrgSetup from "@/pages/admin/OrgSetup";
+import Announcements from "@/pages/comms/Announcements";
+import AuditLog from "@/pages/admin/AuditLog";
+import Notifications from "@/pages/employee/Notifications";
 
 function RootRedirect() {
   const { user, loading } = useAuth();
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<Login />} />
         <Route path="/setup" element={<Setup />} />
+        <Route path="/signup" element={<Setup />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
@@ -69,8 +71,8 @@ export default function App() {
             <Route path="/admin/payroll" element={<PayrollRuns />} />
             <Route path="/admin/payroll/:id" element={<PayrollRunDetail />} />
             <Route path="/admin/ai" element={<AiAssistant />} />
-            <Route path="/admin/comms" element={<Placeholder title="Announcements" />} />
-            <Route path="/admin/audit" element={<Placeholder title="Audit Log" />} />
+            <Route path="/admin/comms" element={<Announcements />} />
+            <Route path="/admin/audit" element={<AuditLog />} />
           </Route>
         </Route>
 
@@ -87,7 +89,7 @@ export default function App() {
             <Route path="/hr/payroll" element={<PayrollRuns />} />
             <Route path="/hr/payroll/:id" element={<PayrollRunDetail />} />
             <Route path="/hr/ai" element={<AiAssistant />} />
-            <Route path="/hr/comms" element={<Placeholder title="Announcements" />} />
+            <Route path="/hr/comms" element={<Announcements />} />
           </Route>
         </Route>
 
@@ -99,7 +101,7 @@ export default function App() {
             <Route path="/employee/leave" element={<MyLeave />} />
             <Route path="/employee/payslips" element={<MyPayslips />} />
             <Route path="/employee/ai" element={<AiAssistant />} />
-            <Route path="/employee/notifications" element={<Placeholder title="Notifications" />} />
+            <Route path="/employee/notifications" element={<Notifications />} />
           </Route>
         </Route>
 
