@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const leaveRequestSchema = new mongoose.Schema(
     {
+        company: { type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null },
         employee: { type: mongoose.Schema.Types.ObjectId, ref: "Employee", required: true },
         leaveType: { type: mongoose.Schema.Types.ObjectId, ref: "LeaveType", required: true },
         startDate: { type: Date, required: true },
@@ -15,5 +16,8 @@ const leaveRequestSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+leaveRequestSchema.index({ company: 1, status: 1 });
+leaveRequestSchema.index({ employee: 1, startDate: 1 });
 
 export default mongoose.model("LeaveRequest", leaveRequestSchema);
