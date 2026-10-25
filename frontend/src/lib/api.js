@@ -35,7 +35,9 @@ async function request(path, { method = "GET", body, headers = {}, isForm = fals
     if (!res.ok) {
         if (res.status === 401) {
             setToken(null);
-            if (!path.includes("/auth/login")) window.location.href = "/login";
+            if (!path.includes("/auth/login") && !path.includes("/auth/companies")) {
+                window.location.href = "/login";
+            }
         }
         throw { status: res.status, message: data?.message || "Something went wrong", errors: data?.errors || [] };
     }
@@ -53,7 +55,10 @@ export const api = {
 
 export const authApi = {
     status: () => api.get("/auth/status"),
+    companies: () => api.get("/auth/companies"),
     setup: (payload) => api.post("/auth/setup", payload),
+    registerCompany: (payload) => api.post("/auth/register-company", payload),
+    registerUser: (payload) => api.post("/auth/register", payload),
     login: (payload) => api.post("/auth/login", payload),
     me: () => api.get("/auth/me"),
     changePassword: (payload) => api.post("/auth/change-password", payload),
@@ -132,7 +137,7 @@ export const dashboardApi = {
 
 export const aiApi = {
     chat: (message) => api.post("/ai/chat", { message }),
-    dashboardSummary: (kpiJson) => api.post("/ai/dashboard-summary", { kpiJson }),
+    dashboardSummary: (kpis) => api.post("/ai/dashboard-summary", { kpis }),
     smartLeave: (text) => api.post("/ai/smart-leave", { text }),
 };
 
@@ -141,5 +146,6 @@ export const commsApi = {
     listAnnouncements: () => api.get("/comms/announcements"),
     myNotifications: () => api.get("/comms/notifications/me"),
     markRead: (id) => api.put(`/comms/notifications/${id}/read`),
+    markAllRead: () => api.put("/comms/notifications/mark-all-read"),
     audit: (query = "") => api.get(`/comms/audit${query}`),
 };
