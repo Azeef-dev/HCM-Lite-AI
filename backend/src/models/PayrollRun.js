@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const payrollRunSchema = new mongoose.Schema(
     {
+        company: { type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null },
         month: { type: Number, required: true, min: 1, max: 12 },
         year: { type: Number, required: true },
         status: { type: String, enum: ["draft", "finalized"], default: "draft" },
@@ -18,6 +19,6 @@ const payrollRunSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-payrollRunSchema.index({ month: 1, year: 1 }, { unique: true });
+payrollRunSchema.index({ company: 1, month: 1, year: 1 });
 
 export default mongoose.model("PayrollRun", payrollRunSchema);
