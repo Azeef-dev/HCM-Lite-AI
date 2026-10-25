@@ -25,7 +25,7 @@ export const calculatePayslipForEmployee = async (employee, month, year, company
     const medical = basic * 0.1;
     const gross = basic * 1.5; // Gross = 1.5 x basic (HRA 40% + medical 10%)
 
-    const fullMonthWorkingDays = getWorkingDaysInMonth(year, month, company.weekends, holidays).length;
+    const fullMonthWorkingDays = getWorkingDaysInMonth(year, month, company.weekends || [0, 6], holidays).length;
     const stats = await getEmployeeMonthStats(employee, year, month, company, holidays);
 
     // Days outside the employment period (joiner/leaver proration) are treated like deduction days
@@ -56,27 +56,47 @@ export const calculatePayslipForEmployee = async (employee, month, year, company
     };
 };
 
-export const generatePayrollDraft = async (month, year, createdBy) => {
-    const existing = await PayrollRun.findOne({ month, year });
+export const generatePayrollDraft = async (month, year, createdBy, companyId) => {
+    const existing = await PayrollRun.findOne({
+        month,
+        year,
+        ...(companyId ? { company: companyId } : {}),
+    });
     if (existing) {
-        const err = new Error(`Payroll run for ${month}/${year} already exists`);
+        const err = new Error(`Payroll run for ${month}/${year} already exists in this organization`);
         err.statusCode = 409;
         throw err;
     }
 
     const [company, holidays, employees] = await Promise.all([
-        Company.findOne(),
-        Holiday.find(),
-        Employee.find({ status: { $ne: "inactive" } }),
+        companyId ? Company.findById(companyId) : Company.findOne(),
+        Holiday.find(companyId ? { company: companyId } : {}),
+        Employee.find({
+            ...(companyId ? { company: companyId } : {}),
+            status: { $ne: "inactive" },
+        }),
     ]);
 
-    const run = await PayrollRun.create({ month, year, status: "draft", createdBy: createdBy.id });
+    const run = await PayrollRun.create({
+        company: companyId || null,
+        month,
+        year,
+        status: "draft",
+        createdBy: createdBy.id,
+    });
 
     let grossTotal = 0, netTotal = 0, taxTotal = 0;
 
     for (const emp of employees) {
         const calc = await calculatePayslipForEmployee(emp, month, year, company || { weekends: [0, 6] }, holidays);
-        await Payslip.create({ payrollRun: run._id, employee: emp._id, month, year, ...calc });
+        await Payslip.create({
+            company: companyId || null,
+            payrollRun: run._id,
+            employee: emp._id,
+            month,
+            year,
+            ...calc,
+        });
         grossTotal += calc.gross;
         netTotal += calc.netPay;
         taxTotal += calc.taxMonthly;
