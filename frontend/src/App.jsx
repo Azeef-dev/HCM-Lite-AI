@@ -62,6 +62,9 @@ export default function App() {
 
             <Route path="/admin/employees" element={<EmployeeList />} />
             <Route path="/admin/employees/:id" element={<EmployeeDetail />} />
+            <Route path="/admin/payroll" element={<PayrollRuns />} />
+            <Route path="/admin/payroll/:id" element={<PayrollRunDetail />} />
+            <Route path="/admin/ai" element={<AiAssistant />} />
 
             <Route path="/admin/attendance" element={<AttendanceBoard />} />
 
