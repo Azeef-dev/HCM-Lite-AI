@@ -10,6 +10,7 @@ router.post("/announcements", requireRole("admin", "hr"), announcementValidator,
 router.get("/announcements", comms.listAnnouncements);
 
 router.get("/notifications/me", comms.getMyNotifications);
+router.put("/notifications/mark-all-read", comms.markAllNotificationsRead);
 router.put("/notifications/:id/read", comms.markNotificationRead);
 
 router.get("/audit", requireRole("admin"), comms.getAuditLog);
