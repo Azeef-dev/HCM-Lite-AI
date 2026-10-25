@@ -178,7 +178,7 @@ export default function AiAssistant() {
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Ask about leave, attendance, payroll, or policies..."
-                        className="min-h-[48px] max-h-32 resize-none"
+                        className="min-h-12 max-h-32 resize-none"
                         disabled={sending}
                     />
                     <Button onClick={() => handleSend()} disabled={sending || !input.trim()} size="icon" className="h-11 w-11 shrink-0">
