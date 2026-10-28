@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { dashboardApi } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { toArray, safe } from "@/lib/normalize";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import StatCard from "@/components/StatCard";
 import EmptyState from "@/components/EmptyState";
+import NoEmployeeProfileNotice from "@/components/NoEmployeeProfileNotice";
 import { Badge } from "@/components/ui/badge";
 import { Clock, AlarmClock, CheckCircle2, CalendarDays, Wallet, Megaphone } from "lucide-react";
 
 export default function EmployeeDashboard() {
+    const { user } = useAuth();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -34,6 +37,8 @@ export default function EmployeeDashboard() {
                 <h1 className="text-2xl font-bold">My Dashboard</h1>
                 <p className="text-sm text-muted-foreground mt-0.5">Your personal snapshot</p>
             </div>
+
+            {!user?.employeeId && <NoEmployeeProfileNotice />}
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard label="Hours This Week" value={`${safe(data.hoursThisWeek, 0)} / 40h`} icon={Clock} color="primary" />
