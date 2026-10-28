@@ -91,6 +91,33 @@ export const orgApi = {
     resetPassword: (id) => api.post(`/org/users/${id}/reset-password`),
 };
 
+// FIX: OrgSetup.jsx calls these as orgApi.departments.list() / .create() / .update() / .remove()
+// — those nested namespaces never existed, only the flat methods above did.
+// That mismatch is exactly what threw "Cannot read properties of undefined (reading 'list')".
+orgApi.departments = {
+    list: orgApi.listDepartments,
+    create: orgApi.createDepartment,
+    update: orgApi.updateDepartment,
+    remove: orgApi.deleteDepartment,
+};
+orgApi.designations = {
+    list: orgApi.listDesignations,
+    create: orgApi.createDesignation,
+    update: orgApi.updateDesignation,
+    remove: orgApi.deleteDesignation,
+};
+orgApi.leaveTypes = {
+    list: orgApi.listLeaveTypes,
+    create: orgApi.createLeaveType,
+    update: orgApi.updateLeaveType,
+    remove: orgApi.deleteLeaveType,
+};
+orgApi.holidays = {
+    list: orgApi.listHolidays,
+    create: orgApi.createHoliday,
+    remove: orgApi.deleteHoliday,
+};
+
 export const employeeApi = {
     create: (payload) => api.post("/employees", payload),
     list: (query = "") => api.get(`/employees${query}`),
