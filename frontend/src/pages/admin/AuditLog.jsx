@@ -3,14 +3,12 @@ import toast from "react-hot-toast";
 import { commsApi } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/EmptyState";
+import DropdownSelect from "@/components/DropdownSelect";
 import {
     ShieldCheck,
-    Search,
-    Filter,
     Clock,
     User,
     Eye,
@@ -29,6 +27,28 @@ const ACTION_COLORS = {
     reject: "bg-red-500/10 text-red-600 border-red-500/20",
     delete: "bg-rose-500/10 text-rose-600 border-rose-500/20",
 };
+
+const ENTITY_OPTIONS = [
+    { value: "", label: "All Entities" },
+    { value: "Company", label: "Company" },
+    { value: "Employee", label: "Employee" },
+    { value: "Department", label: "Department" },
+    { value: "LeaveRequest", label: "LeaveRequest" },
+    { value: "AttendanceCorrection", label: "AttendanceCorrection" },
+    { value: "PayrollRun", label: "PayrollRun" },
+    { value: "Announcement", label: "Announcement" },
+    { value: "User", label: "User" },
+];
+
+const ACTION_OPTIONS = [
+    { value: "", label: "All Actions" },
+    { value: "create", label: "Create" },
+    { value: "update", label: "Update" },
+    { value: "approve", label: "Approve" },
+    { value: "finalize", label: "Finalize" },
+    { value: "reject", label: "Reject" },
+    { value: "delete", label: "Delete" },
+];
 
 export default function AuditLog() {
     const [logs, setLogs] = useState([]);
@@ -60,6 +80,7 @@ export default function AuditLog() {
 
     useEffect(() => {
         loadLogs(1);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [entityFilter, actionFilter]);
 
     return (
@@ -77,43 +98,30 @@ export default function AuditLog() {
                 </Button>
             </div>
 
-            {/* Filters */}
             <Card className="p-4 shadow-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                     <div className="space-y-1">
                         <label className="text-xs font-medium text-muted-foreground">Target Entity</label>
-                        <select
+                        <DropdownSelect
                             value={entityFilter}
-                            onChange={(e) => setEntityFilter(e.target.value)}
-                            className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                            <option value="">All Entities</option>
-                            <option value="Company">Company</option>
-                            <option value="Employee">Employee</option>
-                            <option value="Department">Department</option>
-                            <option value="LeaveRequest">LeaveRequest</option>
-                            <option value="AttendanceCorrection">AttendanceCorrection</option>
-                            <option value="PayrollRun">PayrollRun</option>
-                            <option value="Announcement">Announcement</option>
-                            <option value="User">User</option>
-                        </select>
+                            onChange={setEntityFilter}
+                            options={ENTITY_OPTIONS}
+                            placeholder="All Entities"
+                            triggerClassName="w-full"
+                            size="sm"
+                        />
                     </div>
 
                     <div className="space-y-1">
                         <label className="text-xs font-medium text-muted-foreground">Action Type</label>
-                        <select
+                        <DropdownSelect
                             value={actionFilter}
-                            onChange={(e) => setActionFilter(e.target.value)}
-                            className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                            <option value="">All Actions</option>
-                            <option value="create">Create</option>
-                            <option value="update">Update</option>
-                            <option value="approve">Approve</option>
-                            <option value="finalize">Finalize</option>
-                            <option value="reject">Reject</option>
-                            <option value="delete">Delete</option>
-                        </select>
+                            onChange={setActionFilter}
+                            options={ACTION_OPTIONS}
+                            placeholder="All Actions"
+                            triggerClassName="w-full"
+                            size="sm"
+                        />
                     </div>
 
                     <div className="flex items-end">
@@ -135,7 +143,6 @@ export default function AuditLog() {
                 </div>
             </Card>
 
-            {/* Table */}
             <Card className="overflow-hidden shadow-xs">
                 {loading ? (
                     <div className="p-6 space-y-3">
@@ -218,7 +225,6 @@ export default function AuditLog() {
                     </div>
                 )}
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                     <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20">
                         <p className="text-xs text-muted-foreground">
@@ -250,7 +256,6 @@ export default function AuditLog() {
                 )}
             </Card>
 
-            {/* Before / After Diff Modal */}
             {selectedLog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150 backdrop-blur-xs">
                     <div className="bg-background rounded-xl border max-w-3xl w-full max-h-[85vh] flex flex-col shadow-xl">
