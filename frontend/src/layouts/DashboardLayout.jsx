@@ -11,11 +11,9 @@ import {
 import {
     ChevronDown,
     LogOut,
-    User,
     Building2,
     Bell,
     KeyRound,
-    Sparkles,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -36,7 +34,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
         <div className="min-h-screen flex bg-muted/20">
             {/* Sidebar */}
             <aside className="w-64 shrink-0 border-r bg-background flex flex-col shadow-xs">
-                <div className="px-5 py-4 border-b flex items-center gap-3">
+                <div className="px-6 py-5 border-b flex items-center gap-3">
                     <Logo size="sm" />
                     <div>
                         <h1 className="text-base font-bold leading-tight">HCM Lite</h1>
@@ -46,7 +44,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                     </div>
                 </div>
 
-                <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <nav className="flex-1 px-3 py-5 space-y-1.5 overflow-y-auto">
                     {navItems.map((item) => {
                         const active = location.pathname === item.to;
                         const Icon = item.icon;
@@ -55,7 +53,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                                 key={item.to}
                                 to={item.to}
                                 className={cn(
-                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                                     active
                                         ? "bg-primary text-primary-foreground shadow-xs"
                                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -68,8 +66,8 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                     })}
                 </nav>
 
-                <div className="p-3 border-t">
-                    <div className="rounded-lg bg-muted/50 p-2.5 flex items-center gap-2.5">
+                <div className="p-3.5 border-t">
+                    <div className="rounded-xl bg-muted/50 p-3 flex items-center gap-2.5">
                         <div className="h-8 w-8 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
                             <Building2 className="h-4 w-4" />
                         </div>
@@ -83,7 +81,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
 
             {/* Main Area */}
             <div className="flex-1 flex flex-col min-w-0">
-                <header className="h-16 border-b bg-background flex items-center justify-between px-6 shadow-2xs">
+                <header className="h-16 border-b bg-background flex items-center justify-between px-6 sm:px-8 shadow-2xs">
                     {/* Organization Banner */}
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
@@ -130,7 +128,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                     </div>
                 </header>
 
-                <main className="flex-1 p-6 sm:p-8 overflow-y-auto">
+                <main className="flex-1 p-6 sm:p-10 overflow-y-auto">
                     <Outlet />
                 </main>
             </div>
