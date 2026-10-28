@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import DropdownSelect from "@/components/DropdownSelect";
 import EmptyState from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
-import { toArray, safe } from "@/lib/normalize";
+import { showCredentialToast } from "@/components/CredentialToast";
 import {
     Building2,
     Briefcase,
@@ -26,7 +26,7 @@ import {
     CheckCircle2,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { validatePersonName, validateCode, validateEmail, validateFreeText } from "@/lib/validators";
+import { validatePersonName, validateEmail, validateFreeText } from "@/lib/validators";
 
 const TABS = [
     { key: "departments", label: "Departments", icon: Building2 },
@@ -57,9 +57,9 @@ export default function OrgSetup() {
                         <button
                             key={t.key}
                             onClick={() => setActive(t.key)}
-                            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
-                                    ? "bg-primary text-primary-foreground"
-                                    : "text-muted-foreground hover:bg-muted"
+                            className={`cursor-pointer flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:bg-muted"
                                 }`}
                         >
                             <Icon className="h-4 w-4" />
@@ -95,7 +95,7 @@ function SimpleListTab({ kind, title }) {
         setLoading(true);
         try {
             const res = await api.list();
-            setItems(toArray(res?.data ?? res));
+            setItems(res?.data ?? res ?? []);
         } catch (err) {
             toast.error(err.message || `Failed to load ${title.toLowerCase()}s`);
         } finally {
@@ -111,8 +111,6 @@ function SimpleListTab({ kind, title }) {
     async function handleAdd() {
         const nameErr = validateFreeText(name, { required: true, label: title + " name" });
         if (nameErr) return toast.error(nameErr);
-        const codeErr = code ? validateCode(code) : null;
-        if (codeErr) return toast.error(codeErr);
 
         setSaving(true);
         try {
@@ -246,7 +244,7 @@ function LeaveTypesTab() {
         setLoading(true);
         try {
             const res = await orgApi.leaveTypes.list();
-            setItems(toArray(res?.data ?? res));
+            setItems(res?.data ?? res ?? []);
         } catch (err) {
             toast.error(err.message || "Failed to load leave types");
         } finally {
@@ -324,7 +322,7 @@ function LeaveTypesTab() {
                                     <div>
                                         <span className="font-medium text-sm">{item.name}</span>
                                         <span className="text-sm text-muted-foreground ml-2">
-                                            {safe(item.annualQuota, "—")} days/year
+                                            {item.annualQuota ?? "—"} days/year
                                         </span>
                                     </div>
                                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleDelete(id)}>
@@ -353,7 +351,7 @@ function HolidaysTab() {
         setLoading(true);
         try {
             const res = await orgApi.holidays.list();
-            setItems(toArray(res?.data ?? res));
+            setItems(res?.data ?? res ?? []);
         } catch (err) {
             toast.error(err.message || "Failed to load holidays");
         } finally {
@@ -557,7 +555,7 @@ function HrUsersTab() {
         setLoading(true);
         try {
             const res = await orgApi.listUsers();
-            setUsers(toArray(res?.data ?? res));
+            setUsers(res?.data ?? res ?? []);
         } catch (err) {
             toast.error(err.message || "Failed to load users");
         } finally {
@@ -579,10 +577,14 @@ function HrUsersTab() {
         try {
             const res = await orgApi.createHr({ name: name.trim(), email: email.trim().toLowerCase() });
             const tempPassword = res?.data?.tempPassword ?? res?.tempPassword;
-            toast.success(
-                tempPassword ? `HR account created. Temporary password: ${tempPassword}` : "HR account created",
-                { duration: 8000 }
-            );
+            toast.success("HR account created");
+            if (tempPassword) {
+                showCredentialToast({
+                    label: "Temporary Password",
+                    value: tempPassword,
+                    sub: `Share this with ${name.trim()} — they'll be asked to change it on first sign-in.`,
+                });
+            }
             setName("");
             setEmail("");
             load();
@@ -595,7 +597,7 @@ function HrUsersTab() {
 
     async function handleToggleActive(user) {
         const id = user._id || user.id;
-        const nextActive = !safe(user.isActive, true);
+        const nextActive = !(user.isActive ?? true);
         try {
             await orgApi.setUserActive(id, nextActive);
             toast.success(nextActive ? "Account activated" : "Account deactivated");
@@ -611,10 +613,14 @@ function HrUsersTab() {
         try {
             const res = await orgApi.resetPassword(id);
             const tempPassword = res?.data?.tempPassword ?? res?.tempPassword;
-            toast.success(
-                tempPassword ? `Password reset. Temporary password: ${tempPassword}` : "Password reset",
-                { duration: 8000 }
-            );
+            toast.success("Password reset");
+            if (tempPassword) {
+                showCredentialToast({
+                    label: "New Temporary Password",
+                    value: tempPassword,
+                    sub: `Share this with ${user.name} — they'll be asked to change it on next sign-in.`,
+                });
+            }
         } catch (err) {
             toast.error(err.message || "Failed to reset password");
         }
@@ -653,7 +659,7 @@ function HrUsersTab() {
                     <div className="divide-y rounded-lg border">
                         {hrUsers.map((u) => {
                             const id = u._id || u.id;
-                            const isActive = safe(u.isActive, true);
+                            const isActive = u.isActive ?? true;
                             return (
                                 <div key={id} className="flex items-center justify-between px-4 py-3 flex-wrap gap-2">
                                     <div>
