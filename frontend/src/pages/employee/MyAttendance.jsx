@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { attendanceApi } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { formatTime, formatDate } from "@/lib/time";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,12 +11,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import EmptyState from "@/components/EmptyState";
 import DropdownSelect from "@/components/DropdownSelect";
+import NoEmployeeProfileNotice from "@/components/NoEmployeeProfileNotice";
 import { Clock, LogIn, LogOut, CalendarClock, AlertCircle } from "lucide-react";
 import { validateFreeText } from "@/lib/validators";
 
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 export default function MyAttendance() {
+    const { user } = useAuth();
+    const hasProfile = !!user?.employeeId;
+
     const now = new Date();
     const [month, setMonth] = useState(now.getMonth() + 1);
     const [year, setYear] = useState(now.getFullYear());
@@ -41,6 +46,7 @@ export default function MyAttendance() {
     const canCheckOut = today && today.checkInTime && !today.checkOutTime;
 
     async function handleCheckIn() {
+        if (!hasProfile) return;
         setActing(true);
         try {
             await attendanceApi.checkIn();
@@ -54,6 +60,7 @@ export default function MyAttendance() {
     }
 
     async function handleCheckOut() {
+        if (!hasProfile) return;
         setActing(true);
         try {
             await attendanceApi.checkOut();
@@ -107,6 +114,8 @@ export default function MyAttendance() {
                 <p className="text-sm text-muted-foreground mt-0.5">Track your daily check-in/out and history</p>
             </div>
 
+            {!hasProfile && <NoEmployeeProfileNotice />}
+
             <Card className="bg-linear-to-br from-primary/5 to-accent/10 border-primary/20">
                 <CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -122,10 +131,10 @@ export default function MyAttendance() {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <Button onClick={handleCheckIn} disabled={!canCheckIn || acting} className="gap-2">
+                        <Button onClick={handleCheckIn} disabled={!canCheckIn || acting || !hasProfile} className="gap-2">
                             <LogIn className="h-4 w-4" /> Check In
                         </Button>
-                        <Button onClick={handleCheckOut} disabled={!canCheckOut || acting} variant="outline" className="gap-2">
+                        <Button onClick={handleCheckOut} disabled={!canCheckOut || acting || !hasProfile} variant="outline" className="gap-2">
                             <LogOut className="h-4 w-4" /> Check Out
                         </Button>
                     </div>
