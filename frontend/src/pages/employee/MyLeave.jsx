@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { leaveApi, orgApi, aiApi } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { formatDate } from "@/lib/time";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,12 +11,16 @@ import { Badge, statusBadge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/EmptyState";
 import DropdownSelect from "@/components/DropdownSelect";
+import NoEmployeeProfileNotice from "@/components/NoEmployeeProfileNotice";
 import { validateFreeText, validateIsoDate } from "@/lib/validators";
-import { CalendarDays, Plus, X, Send, Sparkles, Loader2, ArrowRight } from "lucide-react";
+import { CalendarDays, Plus, X, Send, Sparkles, Loader2 } from "lucide-react";
 
 const initialForm = { leaveType: "", startDate: "", endDate: "", reason: "" };
 
 export default function MyLeave() {
+    const { user } = useAuth();
+    const hasProfile = !!user?.employeeId;
+
     const [leaveTypes, setLeaveTypes] = useState([]);
     const [balance, setBalance] = useState([]);
     const [requests, setRequests] = useState([]);
@@ -26,7 +31,6 @@ export default function MyLeave() {
     const [submitting, setSubmitting] = useState(false);
     const [cancellingId, setCancellingId] = useState(null);
 
-    // Smart Leave
     const [smartText, setSmartText] = useState("");
     const [smartLoading, setSmartLoading] = useState(false);
 
@@ -62,7 +66,6 @@ export default function MyLeave() {
             const parsed = res?.parsed || res?.data?.parsed;
             if (!parsed) throw new Error("Could not parse leave request");
 
-            // Match leave type from parsed name or id
             let matchedTypeId = parsed.leaveTypeId;
             if (!matchedTypeId && parsed.leaveType) {
                 const found = leaveTypes.find(
@@ -103,6 +106,7 @@ export default function MyLeave() {
 
     async function handleSubmit(ev) {
         ev.preventDefault();
+        if (!hasProfile) return;
         if (!validate()) return;
         setSubmitting(true);
         try {
@@ -150,19 +154,20 @@ export default function MyLeave() {
                     <h1 className="text-2xl font-bold tracking-tight">My Leave</h1>
                     <p className="text-sm text-muted-foreground mt-0.5">Apply for leave and track your balances</p>
                 </div>
-                <Button onClick={() => setShowForm((s) => !s)} className="gap-2">
+                <Button onClick={() => setShowForm((s) => !s)} className="gap-2" disabled={!hasProfile}>
                     {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                     {showForm ? "Cancel" : "Apply for Leave"}
                 </Button>
             </div>
 
-            {showForm && (
+            {!hasProfile && <NoEmployeeProfileNotice />}
+
+            {showForm && hasProfile && (
                 <Card className="border-primary/30 shadow-xs animate-in fade-in duration-200">
                     <CardHeader className="pb-3">
                         <CardTitle className="text-base font-semibold">New Leave Application</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-5">
-                        {/* Smart Leave AI pre-fill bar */}
                         <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
                             <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
                                 <Sparkles className="h-3.5 w-3.5" />
@@ -302,7 +307,6 @@ export default function MyLeave() {
                                 </thead>
                                 <tbody className="divide-y divide-border">
                                     {requests.map((r) => {
-                                        const badge = statusBadge(r.status);
                                         const canCancel = ["pending", "approved"].includes(r.status);
                                         return (
                                             <tr key={r._id} className="hover:bg-muted/30">
@@ -312,7 +316,7 @@ export default function MyLeave() {
                                                 <td className="py-2.5 px-3 font-semibold">{r.days}</td>
                                                 <td className="py-2.5 px-3 max-w-xs truncate text-xs text-muted-foreground">{r.reason}</td>
                                                 <td className="py-2.5 px-3">
-                                                    <Badge variant={badge.variant} className="capitalize text-xs font-normal">
+                                                    <Badge variant={statusBadge(r.status)} className="capitalize text-xs font-normal">
                                                         {r.status}
                                                     </Badge>
                                                 </td>
