@@ -14,10 +14,8 @@ import {
     Plus,
     X,
     Send,
-    Calendar,
     User,
     Users,
-    Tag,
     Clock,
     Loader2,
 } from "lucide-react";
@@ -137,11 +135,10 @@ export default function Announcements() {
                                             type="button"
                                             key={opt.id}
                                             onClick={() => setForm((p) => ({ ...p, audience: opt.id }))}
-                                            className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors ${
-                                                form.audience === opt.id
-                                                    ? "bg-primary text-primary-foreground border-primary"
-                                                    : "bg-background hover:bg-muted text-muted-foreground"
-                                            }`}
+                                            className={`cursor-pointer py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors ${form.audience === opt.id
+                                                ? "bg-primary text-primary-foreground border-primary"
+                                                : "bg-background hover:bg-muted text-muted-foreground"
+                                                }`}
                                         >
                                             {opt.label}
                                         </button>
@@ -178,7 +175,6 @@ export default function Announcements() {
                 </Card>
             )}
 
-            {/* Filter Tabs */}
             <div className="flex gap-2 border-b pb-2">
                 {[
                     { id: "all", label: "All Announcements" },
@@ -188,11 +184,10 @@ export default function Announcements() {
                     <button
                         key={t.id}
                         onClick={() => setFilter(t.id)}
-                        className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${
-                            filter === t.id
-                                ? "bg-primary/10 text-primary font-semibold"
-                                : "text-muted-foreground hover:bg-muted"
-                        }`}
+                        className={`cursor-pointer text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${filter === t.id
+                            ? "bg-primary/10 text-primary font-semibold"
+                            : "text-muted-foreground hover:bg-muted"
+                            }`}
                     >
                         {t.label}
                     </button>
@@ -216,16 +211,16 @@ export default function Announcements() {
                     {filtered.map((item) => {
                         const dateStr = item.createdAt
                             ? new Date(item.createdAt).toLocaleDateString(undefined, {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                              })
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                            })
                             : "";
                         const timeStr = item.createdAt
                             ? new Date(item.createdAt).toLocaleTimeString(undefined, {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                              })
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            })
                             : "";
 
                         return (
@@ -271,4 +266,3 @@ export default function Announcements() {
         </div>
     );
 }
-
