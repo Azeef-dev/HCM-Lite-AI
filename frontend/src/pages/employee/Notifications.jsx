@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { commsApi } from "@/lib/api";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,7 +19,7 @@ import {
 export default function Notifications() {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState("all"); // "all" | "unread"
+    const [filter, setFilter] = useState("all");
 
     function loadNotifications() {
         setLoading(true);
@@ -93,25 +93,22 @@ export default function Notifications() {
                 )}
             </div>
 
-            {/* Filter Tabs */}
             <div className="flex gap-2 border-b pb-2">
                 <button
                     onClick={() => setFilter("all")}
-                    className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${
-                        filter === "all"
-                            ? "bg-primary/10 text-primary font-semibold"
-                            : "text-muted-foreground hover:bg-muted"
-                    }`}
+                    className={`cursor-pointer text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${filter === "all"
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "text-muted-foreground hover:bg-muted"
+                        }`}
                 >
                     All Notifications ({notifications.length})
                 </button>
                 <button
                     onClick={() => setFilter("unread")}
-                    className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${
-                        filter === "unread"
-                            ? "bg-primary/10 text-primary font-semibold"
-                            : "text-muted-foreground hover:bg-muted"
-                    }`}
+                    className={`cursor-pointer text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${filter === "unread"
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "text-muted-foreground hover:bg-muted"
+                        }`}
                 >
                     Unread ({unreadCount})
                 </button>
@@ -138,28 +135,26 @@ export default function Notifications() {
                     {filtered.map((item) => {
                         const dateStr = item.createdAt
                             ? new Date(item.createdAt).toLocaleString(undefined, {
-                                  month: "short",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                              })
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            })
                             : "";
 
                         return (
                             <Card
                                 key={item._id}
-                                className={`transition-colors shadow-xs ${
-                                    item.isRead
-                                        ? "bg-card hover:bg-muted/30"
-                                        : "bg-primary/5 border-primary/30"
-                                }`}
+                                className={`transition-colors shadow-xs ${item.isRead
+                                    ? "bg-card hover:bg-muted/30"
+                                    : "bg-primary/5 border-primary/30"
+                                    }`}
                             >
                                 <CardContent className="p-4 flex items-start justify-between gap-4">
                                     <div className="flex items-start gap-3.5">
                                         <div
-                                            className={`p-2.5 rounded-xl shrink-0 mt-0.5 ${
-                                                item.isRead ? "bg-muted" : "bg-primary/10"
-                                            }`}
+                                            className={`p-2.5 rounded-xl shrink-0 mt-0.5 ${item.isRead ? "bg-muted" : "bg-primary/10"
+                                                }`}
                                         >
                                             {getIcon(item.type)}
                                         </div>
@@ -204,4 +199,3 @@ export default function Notifications() {
         </div>
     );
 }
-
