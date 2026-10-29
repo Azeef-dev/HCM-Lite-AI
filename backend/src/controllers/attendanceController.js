@@ -5,6 +5,7 @@ import Company from "../models/Company.js";
 import Holiday from "../models/Holiday.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { normalizeDate, isLateCheckIn, isWorkingDay } from "../services/calendarService.js";
+import { checkOfficeGeofence } from "../services/attendanceService.js";
 import { logAudit } from "../services/auditService.js";
 
 const getCompany = async (req) => {
@@ -31,17 +32,73 @@ export const checkIn = asyncHandler(async (req, res) => {
     const late = isLateCheckIn(now, company.officeStartTime || "09:00", company.graceMinutes ?? 15);
 
     const record = existing
-        ? Object.assign(existing, { checkInTime: now, status: late ? "late" : "checked_in", company: req.user.companyId })
+        ? Object.assign(existing, { checkInTime: now, status: late ? "late" : "checked_in", company: req.user.companyId, source: "web" })
         : new Attendance({
             company: req.user.companyId || null,
             employee: employeeId,
             date: today,
             checkInTime: now,
             status: late ? "late" : "checked_in",
+            source: "web",
         });
 
     await record.save();
     res.status(201).json(record);
+});
+
+// POST /api/attendance/check-in-camera
+// Bonus feature (brief Section 5): camera + geolocation based check-in.
+// The browser only captures a photo locally (never uploaded — see note below)
+// and reads GPS coordinates. The SERVER is what decides whether the employee
+// is inside the office radius, using geolib's Haversine distance — exactly
+// what the brief calls out as the server's responsibility, not the client's.
+export const checkInCamera = asyncHandler(async (req, res) => {
+    const employeeId = req.user.employeeId;
+    if (!employeeId) return res.status(400).json({ message: "No employee profile linked to this user" });
+
+    const { lat, lng, accuracy, faceDetected } = req.body;
+
+    if (accuracy != null && accuracy > 100) {
+        return res.status(422).json({ message: "GPS accuracy is too low (worse than 100m). Move to an open area and try again." });
+    }
+    if (faceDetected === false) {
+        return res.status(422).json({ message: "No face was detected in the frame. Please try again." });
+    }
+
+    const now = new Date();
+    const today = normalizeDate(now);
+
+    const existing = await Attendance.findOne({ employee: employeeId, date: today });
+    if (existing?.checkInTime) {
+        return res.status(409).json({ message: "Already checked in today" });
+    }
+
+    const company = await getCompany(req);
+    const geofence = checkOfficeGeofence(company, lat, lng);
+    if (geofence.configured && !geofence.withinRadius) {
+        return res.status(422).json({
+            message: `You are ${geofence.distance}m from the office — outside the allowed ${geofence.radius}m radius.`,
+        });
+    }
+
+    const late = isLateCheckIn(now, company.officeStartTime || "09:00", company.graceMinutes ?? 15);
+
+    const record = existing
+        ? Object.assign(existing, { checkInTime: now, status: late ? "late" : "checked_in", company: req.user.companyId, source: "camera" })
+        : new Attendance({
+            company: req.user.companyId || null,
+            employee: employeeId,
+            date: today,
+            checkInTime: now,
+            status: late ? "late" : "checked_in",
+            source: "camera",
+        });
+
+    await record.save();
+    res.status(201).json({
+        ...record.toObject(),
+        geofence: { distance: geofence.distance, radius: geofence.radius, configured: geofence.configured },
+    });
 });
 
 // POST /api/attendance/check-out
@@ -139,7 +196,7 @@ export const listCorrections = asyncHandler(async (req, res) => {
 
 // PUT /api/attendance/corrections/:id/review  (HR approves/rejects)
 export const reviewCorrection = asyncHandler(async (req, res) => {
-    const { decision, comment } = req.body; // decision: "approved" | "rejected"
+    const { decision, comment } = req.body;
     const record = await Attendance.findById(req.params.id);
     if (!record || record.correction?.status !== "pending") {
         return res.status(404).json({ message: "No pending correction found" });
@@ -222,6 +279,7 @@ export const getAttendanceBoard = asyncHandler(async (req, res) => {
             status,
             checkInTime: rec?.checkInTime || null,
             checkOutTime: rec?.checkOutTime || null,
+            source: rec?.source || null,
         };
     });
 
