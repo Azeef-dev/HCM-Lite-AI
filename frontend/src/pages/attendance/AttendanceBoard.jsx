@@ -97,7 +97,7 @@ export default function AttendanceBoard() {
                                 <tbody>
                                     {rows.map((row) => {
                                         const employee = row.employee || row.user || row;
-                                        const status = row.statu    s || row.attendanceStatus || row.state || "present";
+                                        const status = row.status || row.attendanceStatus || row.state || "present";
                                         const checkIn = row.checkIn || row.inTime || row.check_in || "--";
                                         const checkOut = row.checkOut || row.outTime || row.check_out || "--";
                                         const badge = statusBadge(status);
