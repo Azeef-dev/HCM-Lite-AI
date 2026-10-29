@@ -68,15 +68,8 @@ export const getEmployeeMonthStats = async (employee, year, month, company, holi
     };
 };
 
-// FIX: "geolib" was already sitting in backend/package.json as a dependency —
-// written for exactly this bonus feature — but never imported or used
-// anywhere. This is the server-side geofence check the brief describes:
-// "The server calculates the distance to the office (Haversine formula) and
-// decides; the phone only sends data."
 export const checkOfficeGeofence = (company, lat, lng) => {
     if (company?.officeLocation?.lat == null || company?.officeLocation?.lng == null) {
-        // Admin hasn't set an office location yet in Organization Setup —
-        // don't block check-ins just because the geofence isn't configured.
         return { configured: false, withinRadius: true, distance: null, radius: null };
     }
     const officePoint = { latitude: company.officeLocation.lat, longitude: company.officeLocation.lng };
