@@ -1,12 +1,13 @@
 import express from "express";
 import { verifyToken, requireRole } from "../middleware/auth.js";
 import * as att from "../controllers/attendanceController.js";
-import { correctionRequestValidator, reviewCorrectionValidator } from "../validators/attendanceValidators.js";
+import { correctionRequestValidator, reviewCorrectionValidator, cameraCheckInValidator } from "../validators/attendanceValidators.js";
 
 const router = express.Router();
 router.use(verifyToken);
 
 router.post("/check-in", requireRole("employee"), att.checkIn);
+router.post("/check-in-camera", requireRole("employee"), cameraCheckInValidator, att.checkInCamera);
 router.post("/check-out", requireRole("employee"), att.checkOut);
 router.get("/me", requireRole("employee"), att.getMyAttendance);
 router.post("/correction", requireRole("employee"), correctionRequestValidator, att.requestCorrection);
