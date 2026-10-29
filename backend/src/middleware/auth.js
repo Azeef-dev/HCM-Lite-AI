@@ -5,10 +5,22 @@ import Company from "../models/Company.js";
 export const verifyToken = async (req, res, next) => {
     try {
         const header = req.headers.authorization;
-        if (!header || !header.startsWith("Bearer ")) {
+        let token = null;
+
+        if (header && header.startsWith("Bearer ")) {
+            token = header.split(" ")[1];
+        } else if (req.query?.token) {
+            // FIX: file downloads opened via <a target="_blank"> or window.open()
+            // (payslip PDFs, employee CSV export) can't attach a custom
+            // Authorization header — only a normal GET request. This fallback
+            // is exactly what was causing "No token provided" on those links.
+            token = req.query.token;
+        }
+
+        if (!token) {
             return res.status(401).json({ message: "No token provided" });
         }
-        const token = header.split(" ")[1];
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         const user = await User.findById(decoded.id).select("-password").populate("company");
@@ -19,7 +31,6 @@ export const verifyToken = async (req, res, next) => {
         let companyId = user.company ? (user.company._id || user.company).toString() : null;
         let companyName = user.company ? user.company.name : null;
 
-        // Graceful fallback for legacy records
         if (!companyId) {
             const firstComp = await Company.findOne();
             if (firstComp) {
