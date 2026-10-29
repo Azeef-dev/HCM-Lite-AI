@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import EmptyState from "@/components/EmptyState";
 import DropdownSelect from "@/components/DropdownSelect";
 import NoEmployeeProfileNotice from "@/components/NoEmployeeProfileNotice";
-import { Clock, LogIn, LogOut, CalendarClock, AlertCircle } from "lucide-react";
+import CameraCheckInModal from "@/components/CameraCheckInModal";
+import { Clock, LogIn, LogOut, CalendarClock, AlertCircle, Camera } from "lucide-react";
 import { validateFreeText } from "@/lib/validators";
 
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -27,6 +28,7 @@ export default function MyAttendance() {
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [acting, setActing] = useState(false);
+    const [showCamera, setShowCamera] = useState(false);
     const [showCorrection, setShowCorrection] = useState(null);
     const [form, setForm] = useState({ requestedCheckIn: "", requestedCheckOut: "", reason: "" });
     const [errors, setErrors] = useState({});
@@ -130,9 +132,17 @@ export default function MyAttendance() {
                             </p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <Button onClick={handleCheckIn} disabled={!canCheckIn || acting || !hasProfile} className="gap-2">
                             <LogIn className="h-4 w-4" /> Check In
+                        </Button>
+                        <Button
+                            onClick={() => setShowCamera(true)}
+                            disabled={!canCheckIn || !hasProfile}
+                            variant="outline"
+                            className="gap-2"
+                        >
+                            <Camera className="h-4 w-4" /> Check In with Camera
                         </Button>
                         <Button onClick={handleCheckOut} disabled={!canCheckOut || acting || !hasProfile} variant="outline" className="gap-2">
                             <LogOut className="h-4 w-4" /> Check Out
@@ -175,7 +185,12 @@ export default function MyAttendance() {
                                                 <td className="px-4 py-3">{formatTime(r.checkInTime)}</td>
                                                 <td className="px-4 py-3">{formatTime(r.checkOutTime)}</td>
                                                 <td className="px-4 py-3">{r.workingHours ?? "—"}</td>
-                                                <td className="px-4 py-3"><Badge variant={statusBadge(r.status)}>{r.status?.replace("_", " ")}</Badge></td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Badge variant={statusBadge(r.status)}>{r.status?.replace("_", " ")}</Badge>
+                                                        {r.source === "camera" && <Camera className="h-3.5 w-3.5 text-primary" title="Verified by camera check-in" />}
+                                                    </div>
+                                                </td>
                                                 <td className="px-4 py-3 text-right">
                                                     {r.correction?.status === "pending" ? (
                                                         <Badge variant="warning">Correction Pending</Badge>
@@ -220,6 +235,12 @@ export default function MyAttendance() {
                     )}
                 </CardContent>
             </Card>
+
+            <CameraCheckInModal
+                open={showCamera}
+                onClose={() => setShowCamera(false)}
+                onSuccess={() => { setShowCamera(false); load(); }}
+            />
         </div>
     );
 }
