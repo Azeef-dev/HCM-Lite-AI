@@ -1,16 +1,16 @@
+import { isPointWithinRadius, getDistance } from "geolib";
 import Attendance from "../models/Attendance.js";
 import LeaveRequest from "../models/LeaveRequest.js";
-import { normalizeDate, isWorkingDay, getWorkingDaysInMonth } from "./calendarService.js";
+import { normalizeDate } from "./calendarService.js";
 
-// Returns attendance/leave stats for one employee for a given month (1-12)
 export const getEmployeeMonthStats = async (employee, year, month, company, holidays) => {
     const weekends = company.weekends;
+    const { getWorkingDaysInMonth } = await import("./calendarService.js");
     const workingDays = getWorkingDaysInMonth(year, month, weekends, holidays);
 
     const monthStart = new Date(year, month - 1, 1);
     const monthEnd = new Date(year, month, 0);
 
-    // bound by joining/leaving date
     const joinDate = normalizeDate(employee.dateOfJoining);
     const leaveDate = employee.dateOfLeaving ? normalizeDate(employee.dateOfLeaving) : null;
 
@@ -65,5 +65,27 @@ export const getEmployeeMonthStats = async (employee, year, month, company, holi
         missingCheckoutDays,
         unpaidLeaveDays,
         paidLeaveDays,
+    };
+};
+
+// FIX: "geolib" was already sitting in backend/package.json as a dependency —
+// written for exactly this bonus feature — but never imported or used
+// anywhere. This is the server-side geofence check the brief describes:
+// "The server calculates the distance to the office (Haversine formula) and
+// decides; the phone only sends data."
+export const checkOfficeGeofence = (company, lat, lng) => {
+    if (company?.officeLocation?.lat == null || company?.officeLocation?.lng == null) {
+        // Admin hasn't set an office location yet in Organization Setup —
+        // don't block check-ins just because the geofence isn't configured.
+        return { configured: false, withinRadius: true, distance: null, radius: null };
+    }
+    const officePoint = { latitude: company.officeLocation.lat, longitude: company.officeLocation.lng };
+    const point = { latitude: lat, longitude: lng };
+    const radius = company.radiusMeters || 150;
+    return {
+        configured: true,
+        withinRadius: isPointWithinRadius(point, officePoint, radius),
+        distance: getDistance(point, officePoint),
+        radius,
     };
 };
