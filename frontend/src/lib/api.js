@@ -91,9 +91,6 @@ export const orgApi = {
     resetPassword: (id) => api.post(`/org/users/${id}/reset-password`),
 };
 
-// FIX: OrgSetup.jsx calls these as orgApi.departments.list() / .create() / .update() / .remove()
-// — those nested namespaces never existed, only the flat methods above did.
-// That mismatch is exactly what threw "Cannot read properties of undefined (reading 'list')".
 orgApi.departments = {
     list: orgApi.listDepartments,
     create: orgApi.createDepartment,
@@ -125,11 +122,15 @@ export const employeeApi = {
     update: (id, payload) => api.put(`/employees/${id}`, payload),
     csvImport: (formData, dryRun) =>
         api.post(`/employees/csv-import?dryRun=${dryRun ? "true" : "false"}`, formData, { isForm: true }),
-    exportUrl: () => `${API_BASE}/employees/export`,
+    // FIX: opened via a plain <a> link / window.open() — can't carry an
+    // Authorization header, so the token now rides along as a query param
+    // (the backend's verifyToken middleware now accepts both).
+    exportUrl: () => `${API_BASE}/employees/export?token=${encodeURIComponent(api.getToken() || "")}`,
 };
 
 export const attendanceApi = {
     checkIn: () => api.post("/attendance/check-in"),
+    checkInCamera: (payload) => api.post("/attendance/check-in-camera", payload),
     checkOut: () => api.post("/attendance/check-out"),
     me: (month, year) => api.get(`/attendance/me?month=${month}&year=${year}`),
     requestCorrection: (payload) => api.post("/attendance/correction", payload),
@@ -156,7 +157,8 @@ export const payrollApi = {
     getRun: (id) => api.get(`/payroll/runs/${id}`),
     finalizeRun: (id) => api.put(`/payroll/runs/${id}/finalize`),
     myPayslips: () => api.get("/payroll/payslips/me"),
-    payslipPdfUrl: (id) => `${API_BASE}/payroll/payslips/${id}/pdf`,
+    // FIX: same root cause as exportUrl above.
+    payslipPdfUrl: (id) => `${API_BASE}/payroll/payslips/${id}/pdf?token=${encodeURIComponent(api.getToken() || "")}`,
 };
 
 export const dashboardApi = {
