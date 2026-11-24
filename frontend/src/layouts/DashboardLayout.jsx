@@ -16,6 +16,7 @@ import {
     KeyRound,
 } from "lucide-react";
 import Logo from "@/components/Logo";
+import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({ navItems, roleLabel }) {
@@ -92,6 +93,8 @@ export default function DashboardLayout({ navItems, roleLabel }) {
 
                     {/* Right User Controls */}
                     <div className="flex items-center gap-3">
+                        <ThemeToggle className="text-muted-foreground hover:text-foreground" />
+
                         {user?.role === "employee" && (
                             <Link to="/employee/notifications">
                                 <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground">
@@ -128,7 +131,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                     </div>
                 </header>
 
-                <main className="flex-1 p-6 sm:p-10 overflow-y-auto">
+                <main className="flex-1 p-6 sm:p-8 overflow-y-auto">
                     <Outlet />
                 </main>
             </div>
