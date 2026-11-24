@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 export default function MyPayslips() {
     const [payslips, setPayslips] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [openingId, setOpeningId] = useState(null);
 
     useEffect(() => {
         (async () => {
@@ -25,6 +26,17 @@ export default function MyPayslips() {
             }
         })();
     }, []);
+
+    async function handleOpenPayslip(id) {
+        setOpeningId(id);
+        try {
+            await payrollApi.openPayslipPdf(id);
+        } catch (err) {
+            toast.error(err.message || "Failed to open payslip");
+        } finally {
+            setOpeningId(null);
+        }
+    }
 
     if (loading) {
         return (
@@ -88,12 +100,19 @@ export default function MyPayslips() {
                                                     <Badge variant={statusBadge(safe(p.status, "finalized"))}>{safe(p.status, "finalized")}</Badge>
                                                 </td>
                                                 <td className="py-3 pr-4 text-right">
-                                                    <a href={payrollApi.payslipPdfUrl(pid)} target="_blank" rel="noreferrer">
-                                                        <Button variant="outline" size="sm">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        disabled={openingId === pid}
+                                                        onClick={() => handleOpenPayslip(pid)}
+                                                    >
+                                                        {openingId === pid ? (
+                                                            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                                                        ) : (
                                                             <Download className="h-4 w-4 mr-1.5" />
-                                                            PDF
-                                                        </Button>
-                                                    </a>
+                                                        )}
+                                                        PDF
+                                                    </Button>
                                                 </td>
                                             </tr>
                                         );
