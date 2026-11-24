@@ -4,7 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/Logo";
-import { Mail, Lock, Loader2, CheckCircle2, LogIn, Building2, UserPlus } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
+import { Mail, Lock, Loader2, CheckCircle2, LogIn, Building2, FlaskConical } from "lucide-react";
 import toast from "react-hot-toast";
 import { validateEmail } from "@/lib/validators";
 
@@ -13,6 +14,13 @@ const FEATURES = [
     "Role-based portals for Administrators, HR teams, and Employees",
     "Attendance tracking, leave workflow, and one-click payroll",
     "AI assistant answering from real company data with tools",
+];
+
+// Demo / judging accounts — swap these out before a real production launch.
+const TEST_ACCOUNTS = [
+    { role: "Admin", email: "azeefashraf22@gmail.com", password: "Azeef@456" },
+    { role: "HR", email: "azeef@gmail.com", password: "Azeef@456" },
+    { role: "Employee", email: "ali@gmail.com", password: "Ali@4567" },
 ];
 
 export function redirectByRole(role, navigate) {
@@ -55,13 +63,22 @@ export default function Login() {
         }
     }
 
+    function useTestAccount(acc) {
+        setEmail(acc.email);
+        setPassword(acc.password);
+        setErrors({});
+        toast.success(`${acc.role} demo credentials filled — hit Sign In`);
+    }
+
     return (
         <div className="min-h-screen grid lg:grid-cols-2 bg-background">
-            {/* Left branding panel */}
             <div className="hidden lg:flex flex-col justify-between bg-linear-to-br from-primary via-primary/95 to-primary/80 text-primary-foreground p-12">
-                <div className="flex items-center gap-3">
-                    <Logo size="md" />
-                    <span className="text-xl font-bold tracking-tight">HCM Lite</span>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Logo size="md" />
+                        <span className="text-xl font-bold tracking-tight">HCM Lite</span>
+                    </div>
+                    <ThemeToggle className="text-primary-foreground hover:bg-primary-foreground/10" />
                 </div>
                 <div className="space-y-6 max-w-md">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-foreground/15 text-primary-foreground text-xs font-semibold backdrop-blur-xs">
@@ -83,17 +100,17 @@ export default function Login() {
                         ))}
                     </ul>
                 </div>
-                <p className="text-xs text-primary-foreground/60">
-                    Saylani Hackathon — HCM Lite Platform
-                </p>
+                <p className="text-xs text-primary-foreground/60">Saylani Hackathon — HCM Lite Platform</p>
             </div>
 
-            {/* Right form panel */}
             <div className="flex items-center justify-center p-6 sm:p-10">
                 <div className="w-full max-w-sm">
-                    <div className="lg:hidden flex items-center gap-3 mb-8">
-                        <Logo size="sm" />
-                        <span className="text-lg font-bold">HCM Lite</span>
+                    <div className="lg:hidden flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-3">
+                            <Logo size="sm" />
+                            <span className="text-lg font-bold">HCM Lite</span>
+                        </div>
+                        <ThemeToggle />
                     </div>
 
                     <h2 className="text-2xl font-bold tracking-tight">Sign in to your account</h2>
@@ -109,10 +126,7 @@ export default function Login() {
                                 <Input
                                     type="email"
                                     value={email}
-                                    onChange={(e) => {
-                                        setEmail(e.target.value);
-                                        setErrors((p) => ({ ...p, email: undefined }));
-                                    }}
+                                    onChange={(e) => { setEmail(e.target.value); setErrors((p) => ({ ...p, email: undefined })); }}
                                     placeholder="you@company.com"
                                     className="pl-9 h-11"
                                 />
@@ -127,10 +141,7 @@ export default function Login() {
                                 <Input
                                     type="password"
                                     value={password}
-                                    onChange={(e) => {
-                                        setPassword(e.target.value);
-                                        setErrors((p) => ({ ...p, password: undefined }));
-                                    }}
+                                    onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: undefined })); }}
                                     placeholder="Enter your password"
                                     className="pl-9 h-11"
                                 />
@@ -139,11 +150,7 @@ export default function Login() {
                         </div>
 
                         <Button type="submit" className="w-full h-11" disabled={submitting}>
-                            {submitting ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                                <LogIn className="h-4 w-4 mr-2" />
-                            )}
+                            {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogIn className="h-4 w-4 mr-2" />}
                             Sign In
                         </Button>
 
@@ -157,6 +164,29 @@ export default function Login() {
                             </p>
                         </div>
                     </form>
+
+                    <div className="mt-6 rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-primary mb-3">
+                            <FlaskConical className="h-3.5 w-3.5" />
+                            Testing Accounts (for judges / demo)
+                        </div>
+                        <div className="space-y-2">
+                            {TEST_ACCOUNTS.map((acc) => (
+                                <button
+                                    key={acc.role}
+                                    type="button"
+                                    onClick={() => useTestAccount(acc)}
+                                    className="w-full flex items-center justify-between gap-2 rounded-lg bg-background border px-3 py-2 text-left hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                                >
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-semibold">{acc.role}</p>
+                                        <p className="text-xs text-muted-foreground truncate font-mono">{acc.email} / {acc.password}</p>
+                                    </div>
+                                    <span className="text-[11px] font-medium text-primary shrink-0">Use →</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
