@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { attendanceApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { FaceDetector, FilesetResolver } from "@mediapipe/tasks-vision";
 import {
     Camera,
     MapPin,
@@ -13,6 +14,29 @@ import {
     AlertTriangle,
 } from "lucide-react";
 
+// Cross-browser face detector (works in Chrome, Edge, Firefox and Safari) —
+// loaded once and cached. This replaces the old window.FaceDetector call,
+// which is a Chrome-only experimental API that's unavailable almost
+// everywhere else, so face-checking used to silently never run for most users.
+let faceDetectorPromise = null;
+function getFaceDetector() {
+    if (!faceDetectorPromise) {
+        faceDetectorPromise = FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+        ).then((vision) =>
+            FaceDetector.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath:
+                        "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
+                    delegate: "GPU",
+                },
+                runningMode: "IMAGE",
+            })
+        );
+    }
+    return faceDetectorPromise;
+}
+
 export default function CameraCheckInModal({ open, onClose, onSuccess }) {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
@@ -21,7 +45,7 @@ export default function CameraCheckInModal({ open, onClose, onSuccess }) {
     const [stage, setStage] = useState("loading"); // loading | live | captured | submitting | error
     const [errorMsg, setErrorMsg] = useState("");
     const [photo, setPhoto] = useState(null);
-    const [faceDetected, setFaceDetected] = useState(null); // null = not checked / unsupported
+    const [faceDetected, setFaceDetected] = useState(null); // null = not checked / unavailable
     const [faceChecking, setFaceChecking] = useState(false);
     const [location, setLocation] = useState(null);
     const [locating, setLocating] = useState(true);
@@ -112,25 +136,18 @@ export default function CameraCheckInModal({ open, onClose, onSuccess }) {
         setPhoto(canvas.toDataURL("image/jpeg", 0.85));
         setStage("captured");
 
-        // Best-effort face check using the browser's native FaceDetector API
-        // where it's supported. This isn't a reliable cross-browser guarantee
-        // (Firefox/Safari don't implement it) — it's a bonus signal on top of
-        // the office-radius check, which is what actually gates the check-in
-        // on the server.
-        if (typeof window !== "undefined" && "FaceDetector" in window) {
-            setFaceChecking(true);
-            try {
-                const detector = new window.FaceDetector({ fastMode: true });
-                const bitmap = await createImageBitmap(canvas);
-                const faces = await detector.detect(bitmap);
-                setFaceDetected(faces.length === 1);
-            } catch {
-                setFaceDetected(null);
-            } finally {
-                setFaceChecking(false);
-            }
-        } else {
-            setFaceDetected(null);
+        // Bonus signal on top of the office-radius check, which is what
+        // actually gates the check-in on the server.
+        setFaceChecking(true);
+        try {
+            const detector = await getFaceDetector();
+            const bitmap = await createImageBitmap(canvas);
+            const result = detector.detect(bitmap);
+            setFaceDetected(result.detections.length === 1);
+        } catch {
+            setFaceDetected(null); // model failed to load (e.g. offline) — degrade gracefully
+        } finally {
+            setFaceChecking(false);
         }
     }
 
@@ -242,7 +259,7 @@ export default function CameraCheckInModal({ open, onClose, onSuccess }) {
                                     <>
                                         <AlertTriangle className="h-4 w-4 text-amber-500" />
                                         <span className="text-muted-foreground">
-                                            Face detection isn't supported on this browser — location verification will still apply.
+                                            Couldn't verify a face right now — location verification will still apply.
                                         </span>
                                     </>
                                 )}
