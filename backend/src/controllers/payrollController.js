@@ -88,7 +88,7 @@ export const downloadPayslipPdf = asyncHandler(async (req, res) => {
         return res.status(403).json({ message: "Forbidden" });
     }
 
-    const doc = generatePayslipPdf(payslip, payslip.employee);
+    const doc = generatePayslipPdf(payslip);
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename=payslip-${payslip.month}-${payslip.year}.pdf`);
     doc.pipe(res);
