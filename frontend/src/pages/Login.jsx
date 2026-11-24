@@ -168,7 +168,7 @@ export default function Login() {
                     <div className="mt-6 rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4">
                         <div className="flex items-center gap-2 text-xs font-semibold text-primary mb-3">
                             <FlaskConical className="h-3.5 w-3.5" />
-                            Testing Accounts (for judges / demo)
+                            Testing Accounts
                         </div>
                         <div className="space-y-2">
                             {TEST_ACCOUNTS.map((acc) => (
