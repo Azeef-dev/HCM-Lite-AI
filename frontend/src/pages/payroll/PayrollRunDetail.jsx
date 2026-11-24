@@ -20,6 +20,7 @@ export default function PayrollRunDetail() {
     const [run, setRun] = useState(null);
     const [loading, setLoading] = useState(true);
     const [finalizing, setFinalizing] = useState(false);
+    const [openingId, setOpeningId] = useState(null);
 
     async function load() {
         setLoading(true);
@@ -49,6 +50,17 @@ export default function PayrollRunDetail() {
             toast.error(err.message || "Failed to finalize payroll run");
         } finally {
             setFinalizing(false);
+        }
+    }
+
+    async function handleOpenPayslip(id) {
+        setOpeningId(id);
+        try {
+            await payrollApi.openPayslipPdf(id);
+        } catch (err) {
+            toast.error(err.message || "Failed to open payslip");
+        } finally {
+            setOpeningId(null);
         }
     }
 
@@ -134,12 +146,19 @@ export default function PayrollRunDetail() {
                                                 <td className="py-3 pr-4">{safe(p.tax, 0)}</td>
                                                 <td className="py-3 pr-4 font-semibold">{safe(p.netPay, 0)}</td>
                                                 <td className="py-3 pr-4 text-right">
-                                                    <a href={payrollApi.payslipPdfUrl(pid)} target="_blank" rel="noreferrer">
-                                                        <Button variant="outline" size="sm">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        disabled={openingId === pid}
+                                                        onClick={() => handleOpenPayslip(pid)}
+                                                    >
+                                                        {openingId === pid ? (
+                                                            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                                                        ) : (
                                                             <Download className="h-4 w-4 mr-1.5" />
-                                                            PDF
-                                                        </Button>
-                                                    </a>
+                                                        )}
+                                                        PDF
+                                                    </Button>
                                                 </td>
                                             </tr>
                                         );
