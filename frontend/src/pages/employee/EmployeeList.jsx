@@ -10,7 +10,7 @@ import { Badge, statusBadge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/EmptyState";
 import DropdownSelect from "@/components/DropdownSelect";
-import { Search, UserPlus, Upload, Download, Users, Eye } from "lucide-react";
+import { Search, UserPlus, Upload, Download, Users, Eye, Loader2 } from "lucide-react";
 
 export default function EmployeeList() {
     const { user } = useAuth();
@@ -25,6 +25,7 @@ export default function EmployeeList() {
     const [status, setStatus] = useState("");
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [exporting, setExporting] = useState(false);
 
     const basePath = isHr ? "/hr/employees" : "/admin/employees";
 
@@ -52,8 +53,15 @@ export default function EmployeeList() {
         orgApi.listDepartments().then((res) => setDepartments(res.departments || res || [])).catch(() => { });
     }, []);
 
-    function handleExport() {
-        window.open(employeeApi.exportUrl(), "_blank");
+    async function handleExport() {
+        setExporting(true);
+        try {
+            await employeeApi.exportCsv();
+        } catch (err) {
+            toast.error(err.message || "Failed to export employees");
+        } finally {
+            setExporting(false);
+        }
     }
 
     const departmentOptions = [{ value: "", label: "All Departments" }, ...departments.map((d) => ({ value: d._id, label: d.name }))];
@@ -73,8 +81,8 @@ export default function EmployeeList() {
                 </div>
                 {isHr && (
                     <div className="flex gap-2">
-                        <Button variant="outline" onClick={handleExport} className="gap-2">
-                            <Download className="h-4 w-4" /> Export
+                        <Button variant="outline" onClick={handleExport} disabled={exporting} className="gap-2">
+                            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Export
                         </Button>
                         <Button variant="outline" onClick={() => navigate(`${basePath}/import`)} className="gap-2">
                             <Upload className="h-4 w-4" /> Import CSV
