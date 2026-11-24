@@ -30,7 +30,14 @@ export const calculatePayslipForEmployee = async (employee, month, year, company
 
     // Days outside the employment period (joiner/leaver proration) are treated like deduction days
     const nonEligibleDays = Math.max(fullMonthWorkingDays - stats.workingDaysInMonth, 0);
-    const deductionDays = stats.absentDays + stats.unpaidLeaveDays + 0.5 * stats.halfDays + nonEligibleDays;
+
+    // Bonus rule (brief Section 5 stretch list): every 3 late check-ins in
+    // the month cost half a day's pay, on top of absences / unpaid leave /
+    // half-days. Attendance status itself is untouched — this only affects pay.
+    const latePenaltyDays = Math.floor(stats.lateDays / 3) * 0.5;
+
+    const deductionDays =
+        stats.absentDays + stats.unpaidLeaveDays + 0.5 * stats.halfDays + nonEligibleDays + latePenaltyDays;
 
     const perDay = fullMonthWorkingDays > 0 ? gross / fullMonthWorkingDays : 0;
     const deductionAmount = Number((perDay * deductionDays).toFixed(2));
@@ -47,6 +54,8 @@ export const calculatePayslipForEmployee = async (employee, month, year, company
         presentDays: stats.presentDays,
         absentDays: stats.absentDays,
         halfDays: stats.halfDays,
+        lateDays: stats.lateDays,
+        latePenaltyDays,
         paidLeaveDays: stats.paidLeaveDays,
         unpaidLeaveDays: stats.unpaidLeaveDays,
         deductionDays: Number(deductionDays.toFixed(2)),
