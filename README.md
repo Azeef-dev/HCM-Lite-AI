@@ -6,7 +6,7 @@ A multi-company HR platform built for the Saylani Hackathon brief: company setup
 
 **Backend** — Node.js + Express 4 (ESM) · MongoDB + Mongoose · JWT auth (bcrypt) · PDFKit · express-validator · any OpenAI-compatible chat-completions endpoint (Groq `llama-3.3-70b-versatile` by default)
 
-**Frontend** — React 19 + Vite · Tailwind CSS v4 + shadcn/radix-ui · React Router v7 · react-hot-toast
+**Frontend** — React 19 + Vite · Tailwind CSS v4 + shadcn/radix-ui · React Router v7 · react-hot-toast · MediaPipe Tasks Vision (camera face check)
 
 ## Project structure
 
@@ -51,7 +51,7 @@ echo "VITE_API_URL=http://localhost:5000/api" > .env
 npm run dev              # http://localhost:5173
 ```
 
-> **Never commit a real `.env`.** Only `.env.example` with placeholder values belongs in git. Also add `dist/` to `.gitignore` — a committed build can cause Vercel to serve a stale frontend even after you fix a bug in source.
+> **Never commit a real `.env`.** Only `.env.example` with placeholder values belongs in git. Add `dist/` to `.gitignore` — a committed build can make Vercel serve a stale frontend even after you fix a bug in source.
 
 ### First run
 The database starts empty. Use **Register Company** to create an organization + Admin account (or let the backend bootstrap one from `ADMIN_EMAIL`/`ADMIN_PASSWORD`/`COMPANY_NAME`). Then: Admin configures the company → creates HR logins → HR registers employees (creates their logins) → employees sign in, change their temp password, and use the app.
@@ -69,7 +69,7 @@ The login page has a **Testing Accounts** box that one-click fills these (clearl
 ## Feature checklist
 
 - [x] M1 Auth & Access, M2 Organization Setup, M3 Employees (incl. CSV import/export)
-- [x] M4 Attendance — web check-in/out + **camera & geolocation check-in (bonus)**, now with cross-browser face detection (MediaPipe Tasks Vision)
+- [x] M4 Attendance — web check-in/out + **camera & geolocation check-in (bonus)**, cross-browser face detection via MediaPipe Tasks Vision
 - [x] M5 Leave — apply/cancel/balance + AI "smart leave"
 - [x] M6 Payroll — tax slab, payslip PDF, **late-penalty rule (bonus: 3 lates = 0.5 day)**
 - [x] M7 Dashboards, M8 AI Assistant (chat, summaries, policy Q&A, Roman Urdu), M9 Comms & Audit
