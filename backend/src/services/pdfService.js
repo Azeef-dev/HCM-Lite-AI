@@ -40,11 +40,5 @@ export const generatePayslipPdf = (slip) => {
     doc.moveDown(2);
     doc.fontSize(8).fillColor("gray").text("This is a system-generated payslip.", { align: "center" });
 
-    // IMPORTANT: no doc.pipe()/doc.end() here. The old version called
-    // `doc.pipe(res)` where `res` was actually the *employee object* (a
-    // mismatch with how the controller called this function) and never
-    // returned the document — so every payslip PDF request crashed with a
-    // 500 error before the login-token issue even mattered. The controller
-    // owns the HTTP response stream, so it pipes and ends it itself.
     return doc;
 };
