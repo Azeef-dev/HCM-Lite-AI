@@ -15,6 +15,8 @@ const payslipSchema = new mongoose.Schema(
         presentDays: Number,
         absentDays: Number,
         halfDays: Number,
+        lateDays: Number,
+        latePenaltyDays: Number,
         paidLeaveDays: Number,
         unpaidLeaveDays: Number,
         deductionDays: Number,
