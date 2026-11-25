@@ -56,7 +56,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                 <aside
                     className={cn(
                         "shrink-0 border-r bg-background flex flex-col shadow-xs transition-[width] duration-200",
-                        collapsed ? "w-[72px]" : "w-64"
+                        collapsed ? "w-18" : "w-64"
                     )}
                 >
                     {/* h-16 matches the top bar's h-16 exactly, so the two
