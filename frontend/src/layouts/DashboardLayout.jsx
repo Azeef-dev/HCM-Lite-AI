@@ -51,7 +51,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                 <aside
                     className={cn(
                         "relative shrink-0 border-r bg-background flex flex-col shadow-xs transition-[width] duration-200",
-                        collapsed ? "w-[72px]" : "w-64"
+                        collapsed ? "w-18" : "w-64"
                     )}
                 >
                     {/* h-16 matches the top bar's h-16 exactly, so the two
@@ -72,7 +72,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                     <button
                         type="button"
                         onClick={() => setCollapsed((c) => !c)}
-                        className="absolute -right-3 top-[52px] h-6 w-6 rounded-full border bg-background shadow-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors z-10"
+                        className="absolute -right-3 top-13 h-6 w-6 rounded-full border bg-background shadow-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors z-10"
                         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                     >
                         {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
