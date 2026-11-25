@@ -27,3 +27,15 @@ export const changePasswordValidator = [
     passwordValidation("newPassword", { strong: true }),
     validate,
 ];
+
+export const forgotPasswordValidator = [
+    emailValidation("email"),
+    validate,
+];
+
+export const resetPasswordValidator = [
+    emailValidation("email"),
+    body("token").trim().notEmpty().withMessage("Reset token is required"),
+    passwordValidation("newPassword", { strong: true }),
+    validate,
+];
