@@ -47,12 +47,12 @@ export default function AttendanceBoard() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5">
-                <StatCard icon={<Users className="h-4 w-4" />} label="Total Employees" value={summary.totalEmployees ?? rows.length ?? 0} accent="blue" />
-                <StatCard icon={<UserCheck className="h-4 w-4" />} label="Present" value={summary.present ?? 0} accent="green" />
-                <StatCard icon={<UserX className="h-4 w-4" />} label="Absent" value={summary.absent ?? 0} accent="red" />
-                <StatCard icon={<Clock className="h-4 w-4" />} label="Late" value={summary.late ?? 0} accent="amber" />
-                <StatCard icon={<CalendarOff className="h-4 w-4" />} label="Leave" value={summary.leave ?? 0} accent="purple" />
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <StatCard icon={Users} label="Total Employees" value={summary.totalEmployees ?? rows.length ?? 0} color="primary" />
+                <StatCard icon={UserCheck} label="Present" value={summary.present ?? 0} color="success" />
+                <StatCard icon={UserX} label="Absent" value={summary.absent ?? 0} color="destructive" />
+                <StatCard icon={Clock} label="Late" value={summary.late ?? 0} color="warning" />
+                <StatCard icon={CalendarOff} label="Leave" value={summary.leave ?? 0} color="info" />
             </div>
 
             <Card>
@@ -76,7 +76,7 @@ export default function AttendanceBoard() {
                     ) : rows.length === 0 ? (
                         <div className="p-6">
                             <EmptyState
-                                icon={<Camera className="h-8 w-8" />}
+                                icon={Camera}
                                 title="No attendance data"
                                 description="No employees or logs were found for the selected date and department."
                             />
@@ -91,20 +91,16 @@ export default function AttendanceBoard() {
                                         <th className="px-4 py-3 font-medium">Check-in</th>
                                         <th className="px-4 py-3 font-medium">Check-out</th>
                                         <th className="px-4 py-3 font-medium">Status</th>
-                                        <th className="px-4 py-3 font-medium">Punch</th>
+                                        <th className="px-4 py-3 font-medium">Source</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {rows.map((row) => {
                                         const employee = row.employee || row.user || row;
                                         const status = row.status || row.attendanceStatus || row.state || "present";
-                                        const checkIn = row.checkIn || row.inTime || row.check_in || "--";
-                                        const checkOut = row.checkOut || row.outTime || row.check_out || "--";
-                                        const badge = statusBadge(status);
-                                        const punch = row.punches || row.logs || [];
 
                                         return (
-                                            <tr key={employee._id || row._id || employee.id || `${employee.name}-${row.date}`} className="border-t">
+                                            <tr key={employee._id || employee.id || row._id || `${employee.name}-${row.date}`} className="border-t">
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
                                                         <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
@@ -112,27 +108,15 @@ export default function AttendanceBoard() {
                                                         </div>
                                                         <div>
                                                             <p className="font-medium">{employee.name || "Unknown"}</p>
-                                                            <p className="text-xs text-muted-foreground">{employee.employeeId || employee.id || "No ID"}</p>
+                                                            <p className="text-xs text-muted-foreground">{employee.code || employee.employeeId || employee.id || "No ID"}</p>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">{employee.department?.name || employee.department || row.department || "--"}</td>
-                                                <td className="px-4 py-3">{formatTime(checkIn)}</td>
-                                                <td className="px-4 py-3">{formatTime(checkOut)}</td>
-                                                <td className="px-4 py-3"><Badge className={badge.className}>{badge.label}</Badge></td>
-                                                <td className="px-4 py-3">
-                                                    {punch.length ? (
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {punch.slice(0, 3).map((entry, idx) => (
-                                                                <span key={`${employee._id || employee.id || idx}-${idx}`} className="rounded bg-muted px-2 py-1 text-xs">
-                                                                    {entry.type || "Punch"}: {formatTime(entry.time || entry.timestamp || entry.createdAt)}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-muted-foreground">No logs</span>
-                                                    )}
-                                                </td>
+                                                <td className="px-4 py-3">{formatTime(row.checkInTime)}</td>
+                                                <td className="px-4 py-3">{formatTime(row.checkOutTime)}</td>
+                                                <td className="px-4 py-3"><Badge variant={statusBadge(status)}>{status.replace("_", " ")}</Badge></td>
+                                                <td className="px-4 py-3 capitalize text-muted-foreground">{row.source || "web"}</td>
                                             </tr>
                                         );
                                     })}
