@@ -46,37 +46,50 @@ export default function DashboardLayout({ navItems, roleLabel }) {
 
     return (
         <TooltipProvider delayDuration={150}>
-            <div className="min-h-screen flex bg-muted/20">
+            {/* h-screen + overflow-hidden locks the whole app shell to the
+                viewport height, so the sidebar and header are fixed in
+                place and ONLY the <main> area below scrolls. The previous
+                min-h-screen let the whole page grow past the viewport on
+                long content, which is why the sidebar used to scroll away. */}
+            <div className="h-screen flex bg-muted/20 overflow-hidden">
                 {/* Sidebar */}
                 <aside
                     className={cn(
-                        "relative shrink-0 border-r bg-background flex flex-col shadow-xs transition-[width] duration-200",
-                        collapsed ? "w-18" : "w-64"
+                        "shrink-0 border-r bg-background flex flex-col shadow-xs transition-[width] duration-200",
+                        collapsed ? "w-[72px]" : "w-64"
                     )}
                 >
                     {/* h-16 matches the top bar's h-16 exactly, so the two
                         border-bottom lines sit at the same height and read
-                        as one continuous line across the page. */}
-                    <div className="h-16 px-4 border-b flex items-center gap-3 overflow-hidden">
-                        <Logo size="sm" />
+                        as one continuous line across the page. The
+                        collapse/expand toggle now lives inside this same
+                        box instead of floating on the sidebar's edge. */}
+                    <div
+                        className={cn(
+                            "h-16 px-4 border-b flex items-center overflow-hidden",
+                            collapsed ? "justify-center" : "justify-between gap-3"
+                        )}
+                    >
                         {!collapsed && (
-                            <div className="min-w-0">
-                                <h1 className="text-base font-bold leading-tight truncate">HCM Lite</h1>
-                                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate">
-                                    {roleLabel} Console
-                                </p>
+                            <div className="flex items-center gap-3 min-w-0">
+                                <Logo size="sm" />
+                                <div className="min-w-0">
+                                    <h1 className="text-base font-bold leading-tight truncate">HCM Lite</h1>
+                                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate">
+                                        {roleLabel} Console
+                                    </p>
+                                </div>
                             </div>
                         )}
+                        <button
+                            type="button"
+                            onClick={() => setCollapsed((c) => !c)}
+                            className="h-7 w-7 shrink-0 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                        >
+                            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                        </button>
                     </div>
-
-                    <button
-                        type="button"
-                        onClick={() => setCollapsed((c) => !c)}
-                        className="absolute -right-3 top-13 h-6 w-6 rounded-full border bg-background shadow-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors z-10"
-                        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                    >
-                        {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-                    </button>
 
                     <nav className="flex-1 px-3 py-5 space-y-1.5 overflow-y-auto overflow-x-hidden">
                         {navItems.map((item) => {
@@ -111,7 +124,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                         })}
                     </nav>
 
-                    <div className="p-3.5 border-t">
+                    <div className="p-3.5 border-t shrink-0">
                         <div className={cn("rounded-xl bg-muted/50 p-3 flex items-center gap-2.5", collapsed && "justify-center p-2")}>
                             <div className="h-8 w-8 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
                                 <Building2 className="h-4 w-4" />
@@ -128,7 +141,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
 
                 {/* Main Area */}
                 <div className="flex-1 flex flex-col min-w-0">
-                    <header className="h-16 border-b bg-background flex items-center justify-between px-6 sm:px-8 shadow-2xs">
+                    <header className="h-16 shrink-0 border-b bg-background flex items-center justify-between px-6 sm:px-8 shadow-2xs">
                         <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
                                 <Building2 className="h-3.5 w-3.5" />
