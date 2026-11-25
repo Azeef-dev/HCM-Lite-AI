@@ -1,8 +1,8 @@
-const CACHE_NAME = "hcm-lite-shell-v1";
-const APP_SHELL = ["/", "/index.html", "/favicon.ico"];
+const CACHE_NAME = "hcm-lite-shell-v2";
+const OFFLINE_URL = "/index.html";
 
 self.addEventListener("install", (event) => {
-    event.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(APP_SHELL)).catch(() => { }));
+    event.waitUntil(caches.open(CACHE_NAME).then((c) => c.add(OFFLINE_URL)).catch(() => { }));
     self.skipWaiting();
 });
 
@@ -13,20 +13,25 @@ self.addEventListener("activate", (event) => {
     self.clients.claim();
 });
 
+// Only step in for full page navigations (typing the URL, refreshing) when
+// the network is genuinely unreachable, so the person sees the app shell
+// instead of the browser's bare "no internet" page. Every other request —
+// API calls, JS/CSS bundles, images, fonts — is left completely alone and
+// goes straight to the network, as if this file didn't exist.
+//
+// The previous version tried to cache/intercept every GET request, which
+// meant a bundle or asset that simply hadn't been cached yet could come
+// back as a synthetic 503 "Offline" response even while fully online —
+// that's exactly the confusing second error in your console. This version
+// cannot cause that anymore, because it never touches non-navigation
+// requests at all.
 self.addEventListener("fetch", (event) => {
-    if (event.request.method !== "GET") return;
-    if (event.request.url.includes("/api/")) return; // never cache API calls
+    if (event.request.mode !== "navigate") return;
 
     event.respondWith(
-        fetch(event.request)
-            .then((response) => {
-                const copy = response.clone();
-                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-                return response;
-            })
-            .catch(async () => {
-                const cached = await caches.match(event.request);
-                return cached || new Response("Offline", { status: 503, statusText: "Offline" });
-            })
+        fetch(event.request).catch(async () => {
+            const cached = await caches.match(OFFLINE_URL);
+            return cached || new Response("You're offline.", { status: 503, statusText: "Offline" });
+        })
     );
 });
