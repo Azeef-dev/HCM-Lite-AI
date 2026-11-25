@@ -16,6 +16,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
     if (event.request.method !== "GET") return;
     if (event.request.url.includes("/api/")) return; // never cache API calls
+
     event.respondWith(
         fetch(event.request)
             .then((response) => {
@@ -23,6 +24,15 @@ self.addEventListener("fetch", (event) => {
                 caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
                 return response;
             })
-            .catch(() => caches.match(event.request))
+            .catch(async () => {
+                // respondWith() needs a real Response object. If the network
+                // fails and nothing is cached yet (e.g. first visit), the old
+                // code returned caches.match()'s result directly, which can
+                // resolve to `undefined` — that's exactly what threw "Failed
+                // to convert value to 'Response'" in the console. Always
+                // fall back to an actual Response.
+                const cached = await caches.match(event.request);
+                return cached || new Response("Offline", { status: 503, statusText: "Offline" });
+            })
     );
 });
