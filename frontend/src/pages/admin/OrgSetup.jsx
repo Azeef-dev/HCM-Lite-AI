@@ -162,7 +162,7 @@ function SimpleListTab({ kind, title }) {
                         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={`e.g. ${title === "Department" ? "Engineering" : "Software Engineer"}`} className="w-56" />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-sm font-medium">Code (optional)</label>
+                        <label className="text-sm font-medium">Code (optional) </label>
                         <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ENG" className="w-32" />
                     </div>
                     <Button onClick={handleAdd} disabled={saving}>
