@@ -24,7 +24,10 @@ const callLLM = async (messages, tools) => {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.AI_API_KEY}` },
             body: JSON.stringify({
-                model: process.env.AI_MODEL || "gpt-4o-mini",
+                // NOTE: Groq decommissioned "llama-3.3-70b-versatile" on
+                // 2026-08-16 — every call with that model now fails. Set
+                // AI_MODEL in your env to override; this is just the fallback.
+                model: process.env.AI_MODEL || "openai/gpt-oss-120b",
                 messages,
                 tools: tools?.length ? tools : undefined,
                 tool_choice: tools?.length ? "auto" : undefined,
@@ -32,8 +35,21 @@ const callLLM = async (messages, tools) => {
             }),
             signal: controller.signal,
         });
-        if (!response.ok) throw new Error(`AI provider error (${response.status}): ${await response.text()}`);
+        if (!response.ok) {
+            const errorBody = await response.text();
+            // Logged server-side only, never sent to the client — check your
+            // host's function logs to see the *real* reason ("AI summary
+            // unavailable right now" alone won't tell you that).
+            console.error(`[AI] Provider error ${response.status}:`, errorBody);
+            throw new Error(`AI provider error (${response.status})`);
+        }
         return response.json();
+    } catch (err) {
+        if (err.name === "AbortError") {
+            console.error("[AI] Request timed out after 15s");
+            throw new Error("AI provider timed out");
+        }
+        throw err;
     } finally {
         clearTimeout(timeout);
     }
