@@ -1,17 +1,18 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import User from "../models/User.js";
 import Company from "../models/Company.js";
 import Department from "../models/Department.js";
 import LeaveType from "../models/LeaveType.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { logAudit } from "../services/auditService.js";
+import { sendMail } from "../utils/mailer.js";
 
 const signToken = (user) =>
     jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN || "7d",
     });
 
-// Helper to seed standard defaults for a newly created company
 const seedCompanyDefaults = async (companyId) => {
     try {
         const defaultDepts = ["Engineering", "Human Resources", "Finance", "Operations"];
@@ -32,19 +33,16 @@ const seedCompanyDefaults = async (companyId) => {
     }
 };
 
-// GET /api/auth/status
 export const getSetupStatus = asyncHandler(async (req, res) => {
     const count = await Company.countDocuments();
     res.json({ isSetupComplete: count > 0, totalCompanies: count });
 });
 
-// GET /api/auth/companies  -> lists available companies for registration/switching
 export const listCompanies = asyncHandler(async (req, res) => {
     const companies = await Company.find().select("name address phone industry createdAt").sort({ name: 1 });
     res.json(companies);
 });
 
-// POST /api/auth/setup & /api/auth/register-company -> creates a new company + admin account
 export const firstRunSetup = asyncHandler(async (req, res) => {
     const { companyName, companyAddress, companyPhone, industry, adminName, adminEmail, adminPassword } = req.body;
 
@@ -61,7 +59,6 @@ export const firstRunSetup = asyncHandler(async (req, res) => {
         return res.status(409).json({ message: "An account with this email already exists. Please sign in." });
     }
 
-    // Create the company
     const company = await Company.create({
         name,
         address: companyAddress || "",
@@ -70,7 +67,6 @@ export const firstRunSetup = asyncHandler(async (req, res) => {
         isSetupComplete: true,
     });
 
-    // Create the admin account attached to this company
     const admin = await User.create({
         name: adminName || "Administrator",
         email,
@@ -82,7 +78,6 @@ export const firstRunSetup = asyncHandler(async (req, res) => {
     company.createdBy = admin._id;
     await company.save();
 
-    // Seed initial departments & leave types so the company is instantly productive
     await seedCompanyDefaults(company._id);
 
     await logAudit({
@@ -108,7 +103,6 @@ export const firstRunSetup = asyncHandler(async (req, res) => {
     });
 });
 
-// POST /api/auth/register-user -> allow employee/user signup under an existing company
 export const registerUser = asyncHandler(async (req, res) => {
     const { name, email, password, companyId } = req.body;
     if (!name || !email || !password || !companyId) {
@@ -148,7 +142,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
 });
 
-// POST /api/auth/login
 export const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -165,7 +158,6 @@ export const login = asyncHandler(async (req, res) => {
         return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Attach first company if legacy record without company
     if (!user.company) {
         const firstComp = await Company.findOne();
         if (firstComp) {
@@ -193,7 +185,6 @@ export const login = asyncHandler(async (req, res) => {
     });
 });
 
-// POST /api/auth/change-password
 export const changePassword = asyncHandler(async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const user = await User.findById(req.user.id);
@@ -208,7 +199,6 @@ export const changePassword = asyncHandler(async (req, res) => {
     res.json({ message: "Password changed successfully" });
 });
 
-// GET /api/auth/me
 export const getMe = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user.id).select("-password").populate("employee").populate("company");
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -223,4 +213,71 @@ export const getMe = asyncHandler(async (req, res) => {
         company: user.company ? { id: user.company._id, name: user.company.name } : null,
         mustChangePassword: user.mustChangePassword,
     });
+});
+
+// ---- Forgot / Reset password ----
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    // Always respond the same way whether or not the account exists, so we
+    // never leak which emails are registered.
+    const genericResponse = { message: "If an account exists for that email, a reset link has been sent." };
+
+    if (!user || !user.isActive) {
+        return res.json(genericResponse);
+    }
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordTokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    user.resetPasswordExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    await user.save();
+
+    const frontendOrigin = (process.env.FRONTEND_URL || "http://localhost:5173")
+        .split(",")[0]
+        .trim()
+        .replace(/\/$/, "");
+    const resetUrl = `${frontendOrigin}/reset-password?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
+
+    const mailResult = await sendMail({
+        to: user.email,
+        subject: "Reset your HCM Lite password",
+        html: `<p>Hi ${user.name},</p><p>Click the link below to reset your password. This link expires in 30 minutes.</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>If you didn't request this, you can safely ignore this email.</p>`,
+    });
+
+    if (mailResult.skipped) {
+        // Dev-only fallback: hand the link back directly so the feature keeps
+        // working end-to-end before SMTP is configured. Never do this in
+        // production — it would let anyone reset anyone's password.
+        if (process.env.NODE_ENV !== "production") {
+            return res.json({ ...genericResponse, devResetUrl: resetUrl });
+        }
+        console.warn(`[auth] Reset requested for ${user.email} but SMTP isn't configured — no email was sent.`);
+    }
+
+    res.json(genericResponse);
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+    const { email, token, newPassword } = req.body;
+    const user = await User.findOne({ email: (email || "").toLowerCase() });
+
+    const invalid = { message: "This reset link is invalid or has expired. Please request a new one." };
+    if (!user || !user.resetPasswordTokenHash || !user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+        return res.status(400).json(invalid);
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(token || "").digest("hex");
+    if (tokenHash !== user.resetPasswordTokenHash) {
+        return res.status(400).json(invalid);
+    }
+
+    user.password = newPassword;
+    user.mustChangePassword = false;
+    user.resetPasswordTokenHash = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.json({ message: "Password reset successfully. You can now sign in." });
 });
