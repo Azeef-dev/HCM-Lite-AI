@@ -74,7 +74,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                         <button
                             type="button"
                             onClick={() => setCollapsed((c) => !c)}
-                            className="h-7 w-7 shrink-0 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            className="h-7 w-7 shrink-0 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                         >
                             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
