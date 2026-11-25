@@ -51,8 +51,7 @@ async function request(path, { method = "GET", body, headers = {}, isForm = fals
 // <a href> or window.open() can't attach an Authorization header, which is
 // exactly what causes a "No token provided" error on those links. Instead we
 // fetch the file ourselves (with the header), turn the response into a
-// blob URL, then either open it or trigger a download — the token never
-// touches the URL, browser history, or any server/proxy access log.
+// blob URL, then either open it or trigger a download.
 async function fetchAuthenticatedBlob(path) {
     const token = getToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -69,7 +68,7 @@ async function fetchAuthenticatedBlob(path) {
         try {
             data = await res.json();
         } catch {
-            data = null; // not JSON — e.g. a PDF/CSV stream
+            data = null;
         }
         if (res.status === 401) {
             setToken(null);
@@ -117,6 +116,8 @@ export const authApi = {
     login: (payload) => api.post("/auth/login", payload),
     me: () => api.get("/auth/me"),
     changePassword: (payload) => api.post("/auth/change-password", payload),
+    forgotPassword: (payload) => api.post("/auth/forgot-password", payload),
+    resetPassword: (payload) => api.post("/auth/reset-password", payload),
 };
 
 export const orgApi = {
@@ -174,8 +175,6 @@ export const employeeApi = {
     update: (id, payload) => api.put(`/employees/${id}`, payload),
     csvImport: (formData, dryRun) =>
         api.post(`/employees/csv-import?dryRun=${dryRun ? "true" : "false"}`, formData, { isForm: true }),
-    // Authenticated download — no token in the URL, works regardless of
-    // how the link is opened.
     exportCsv: () =>
         downloadAuthenticatedFile("/employees/export", `employees-${new Date().toISOString().slice(0, 10)}.csv`),
 };
@@ -209,8 +208,6 @@ export const payrollApi = {
     getRun: (id) => api.get(`/payroll/runs/${id}`),
     finalizeRun: (id) => api.put(`/payroll/runs/${id}/finalize`),
     myPayslips: () => api.get("/payroll/payslips/me"),
-    // Authenticated view — opens the PDF in a new tab without ever putting
-    // the auth token in a URL.
     openPayslipPdf: (id) => openAuthenticatedFile(`/payroll/payslips/${id}/pdf`),
 };
 
