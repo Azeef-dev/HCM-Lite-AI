@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 import Login from "@/pages/Login";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import Setup from "@/pages/Setup";
 import ChangePassword from "@/pages/ChangePassword";
 import Unauthorized from "@/pages/Unauthorized";
