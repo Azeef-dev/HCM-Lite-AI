@@ -46,11 +46,6 @@ export default function DashboardLayout({ navItems, roleLabel }) {
 
     return (
         <TooltipProvider delayDuration={150}>
-            {/* h-screen + overflow-hidden locks the whole app shell to the
-                viewport height, so the sidebar and header are fixed in
-                place and ONLY the <main> area below scrolls. The previous
-                min-h-screen let the whole page grow past the viewport on
-                long content, which is why the sidebar used to scroll away. */}
             <div className="h-screen flex bg-muted/20 overflow-hidden">
                 {/* Sidebar */}
                 <aside
@@ -59,11 +54,6 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                         collapsed ? "w-18" : "w-64"
                     )}
                 >
-                    {/* h-16 matches the top bar's h-16 exactly, so the two
-                        border-bottom lines sit at the same height and read
-                        as one continuous line across the page. The
-                        collapse/expand toggle now lives inside this same
-                        box instead of floating on the sidebar's edge. */}
                     <div
                         className={cn(
                             "h-16 px-4 border-b flex items-center overflow-hidden",
