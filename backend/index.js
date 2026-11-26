@@ -28,31 +28,39 @@ import dashboardRoutes from "./src/routes/dashboardRoutes.js";
 import aiRoutes from "./src/routes/aiRoutes.js";
 import commsRoutes from "./src/routes/commsRoutes.js";
 
-connectDB();
-
 const app = express();
-
-const allowedOrigins = (process.env.FRONTEND_URL || "")
-    .split(",")
-    .map((o) => o.trim().replace(/\/$/, ""))
-    .filter(Boolean);
-
-allowedOrigins.push("http://localhost:5173", "http://127.0.0.1:5173");
 
 app.use(
     cors({
-        origin: function (origin, callback) {
-            if (!origin) return callback(null, true);
-            const clean = origin.replace(/\/$/, "");
-            if (allowedOrigins.includes(clean)) return callback(null, true);
-            return callback(null, true); // Allow all dev requests gracefully
-        },
+        // Origins aren't the actual security boundary here — every
+        // protected route already requires a valid JWT — so we just
+        // reflect whatever Origin the browser sends. The previous version
+        // kept a FRONTEND_URL allow-list check but then unconditionally
+        // returned callback(null, true) right after it anyway, so it was
+        // already allowing every origin; this just removes that dead,
+        // misleading code instead of pretending to restrict anything.
+        origin: true,
         credentials: true,
     })
 );
 
 app.use(express.json());
 app.use(morgan("dev"));
+
+// Make sure MongoDB is connected before any route touches the database —
+// and, critically, never let that crash the whole process (see the
+// comment in src/config/db.js for why that matters here). This also
+// guarantees CORS headers are always present on the response even when
+// the database is unreachable, since cors() above already ran by then.
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        console.error("[db] Request blocked — database unavailable:", err.message);
+        res.status(503).json({ message: "Service temporarily unavailable. Please try again shortly." });
+    }
+});
 
 app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date() }));
 
