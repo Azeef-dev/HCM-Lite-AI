@@ -99,7 +99,6 @@ export default function Login() {
                         ))}
                     </ul>
                 </div>
-                <p className="text-xs text-primary-foreground/60">Saylani Hackathon — HCM Lite Platform</p>
             </div>
 
             <div className="flex items-center justify-center p-6 sm:p-10">
