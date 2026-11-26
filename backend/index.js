@@ -32,13 +32,6 @@ const app = express();
 
 app.use(
     cors({
-        // Origins aren't the actual security boundary here — every
-        // protected route already requires a valid JWT — so we just
-        // reflect whatever Origin the browser sends. The previous version
-        // kept a FRONTEND_URL allow-list check but then unconditionally
-        // returned callback(null, true) right after it anyway, so it was
-        // already allowing every origin; this just removes that dead,
-        // misleading code instead of pretending to restrict anything.
         origin: true,
         credentials: true,
     })
@@ -47,11 +40,6 @@ app.use(
 app.use(express.json());
 app.use(morgan("dev"));
 
-// Make sure MongoDB is connected before any route touches the database —
-// and, critically, never let that crash the whole process (see the
-// comment in src/config/db.js for why that matters here). This also
-// guarantees CORS headers are always present on the response even when
-// the database is unreachable, since cors() above already ran by then.
 app.use(async (req, res, next) => {
     try {
         await connectDB();
