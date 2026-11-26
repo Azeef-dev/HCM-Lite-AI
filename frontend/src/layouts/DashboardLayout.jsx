@@ -51,7 +51,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                 <aside
                     className={cn(
                         "shrink-0 border-r bg-background flex flex-col shadow-xs transition-[width] duration-200",
-                        collapsed ? "w-[72px]" : "w-64"
+                        collapsed ? "w-18" : "w-64"
                     )}
                 >
                     <div
