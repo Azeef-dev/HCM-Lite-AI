@@ -38,6 +38,7 @@ import MyPayslips from "@/pages/employee/MyPayslips";
 import AiAssistant from "@/pages/ai/AiAssistant";
 import OrgSetup from "@/pages/admin/OrgSetup";
 import Announcements from "@/pages/comms/Announcements";
+import Analytics from "@/pages/admin/Analytics";
 import AuditLog from "@/pages/admin/AuditLog";
 import Notifications from "@/pages/employee/Notifications";
 
@@ -74,6 +75,7 @@ export default function App() {
             <Route path="/admin/organization" element={<OrgSetup />} />
             <Route path="/admin/payroll" element={<PayrollRuns />} />
             <Route path="/admin/payroll/:id" element={<PayrollRunDetail />} />
+            <Route path="/admin/analytics" element={<Analytics />} />
             <Route path="/admin/ai" element={<AiAssistant />} />
             <Route path="/admin/comms" element={<Announcements />} />
             <Route path="/admin/audit" element={<AuditLog />} />
