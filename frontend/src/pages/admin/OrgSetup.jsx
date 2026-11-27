@@ -79,7 +79,7 @@ export default function OrgSetup() {
     );
 }
 
-/* ---------------- Departments / Designations ---------------- */
+/*  Departments / Designations  */
 
 function SimpleListTab({ kind, title }) {
     const api = orgApi[kind];
@@ -231,7 +231,7 @@ function SimpleListTab({ kind, title }) {
     );
 }
 
-/* ---------------- Leave Types ---------------- */
+/*  Leave Types  */
 
 function LeaveTypesTab() {
     const [items, setItems] = useState([]);
@@ -338,7 +338,7 @@ function LeaveTypesTab() {
     );
 }
 
-/* ---------------- Holidays ---------------- */
+/*  Holidays  */
 
 function HolidaysTab() {
     const [items, setItems] = useState([]);
@@ -447,7 +447,7 @@ function HolidaysTab() {
     );
 }
 
-/* ---------------- Company Settings ---------------- */
+/*  Company Settings  */
 
 function CompanySettingsTab() {
     const [loading, setLoading] = useState(true);
@@ -542,7 +542,7 @@ function CompanySettingsTab() {
     );
 }
 
-/* ---------------- HR Users ---------------- */
+/*  HR Users  */
 
 function HrUsersTab() {
     const [users, setUsers] = useState([]);
