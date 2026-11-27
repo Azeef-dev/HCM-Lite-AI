@@ -9,7 +9,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Robustly locate .env whether started from root or backend directory
 const envPath = fs.existsSync(path.join(__dirname, ".env"))
     ? path.join(__dirname, ".env")
     : path.join(process.cwd(), ".env");
@@ -27,6 +26,7 @@ import payrollRoutes from "./src/routes/payrollRoutes.js";
 import dashboardRoutes from "./src/routes/dashboardRoutes.js";
 import aiRoutes from "./src/routes/aiRoutes.js";
 import commsRoutes from "./src/routes/commsRoutes.js";
+import analyticsRoutes from "./src/routes/analyticsRoutes.js";
 
 const app = express();
 
@@ -61,6 +61,7 @@ app.use("/api/payroll", payrollRoutes);
 app.use("/api/dashboards", dashboardRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/comms", commsRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
