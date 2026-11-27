@@ -34,22 +34,6 @@ async function aggregateStats(emp, months, company, holidays) {
     return { workingDays, absentDays, lateDays, halfDays, unpaidLeaveDays };
 }
 
-/**
- * A transparent, rule-based heuristic — NOT a trained model and not a
- * prediction of who will actually leave. It only looks at attendance and
- * leave patterns over the trailing 3 months, which is a narrow slice of
- * someone's actual situation. Treat a high score as "worth a conversation",
- * never as a verdict, and never surface this to the employee themselves.
- *
- * Weights (each capped independently, then summed and capped at 100):
- *   Absence rate   → up to 50 pts (maxes out at a 33% absence rate)
- *   Unpaid leave    → up to 20 pts (maxes out at a 20% unpaid-leave rate)
- *   Lateness rate  → up to 20 pts (maxes out at a 20% late rate)
- *   Half-day rate  → up to 10 pts (maxes out at a 20% half-day rate)
- *   New hire bonus → +10 pts flat if tenure <= 90 days (early-tenure exits
- *                    are the single most common attrition window in most
- *                    orgs, independent of attendance)
- */
 export const computeAttritionRisk = async (companyId) => {
     const [company, holidays, employees] = await Promise.all([
         companyId ? Company.findById(companyId) : Company.findOne(),
