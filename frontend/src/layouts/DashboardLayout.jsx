@@ -166,7 +166,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
 
                             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20 min-w-0">
                                 <Building2 className="h-3.5 w-3.5 shrink-0" />
-                                <span className="font-semibold truncate max-w-[140px] sm:max-w-xs">{companyName}</span>
+                                <span className="font-semibold truncate max-w-35 sm:max-w-xs">{companyName}</span>
                             </div>
                         </div>
 
@@ -187,7 +187,7 @@ export default function DashboardLayout({ navItems, roleLabel }) {
                                         <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-foreground font-semibold text-xs border shrink-0">
                                             {user?.name ? user.name[0].toUpperCase() : "U"}
                                         </div>
-                                        <span className="hidden sm:inline text-sm font-medium max-w-[120px] truncate">{user?.name}</span>
+                                        <span className="hidden sm:inline text-sm font-medium max-w-30 truncate">{user?.name}</span>
                                         <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                                     </Button>
                                 </DropdownMenuTrigger>
