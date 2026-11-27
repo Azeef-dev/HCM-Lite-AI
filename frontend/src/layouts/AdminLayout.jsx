@@ -10,6 +10,7 @@ const navItems = [
     { to: "/admin/payroll", label: "Payroll", icon: Wallet },
     { to: "/admin/ai", label: "AI Assistant", icon: Bot },
     { to: "/admin/comms", label: "Announcements", icon: Megaphone },
+    { to: "/admin/analytics", label: "Analytics", icon: TrendingDown },
     { to: "/admin/audit", label: "Audit Log", icon: ShieldCheck },
 ];
 
