@@ -231,3 +231,8 @@ export const commsApi = {
     markAllRead: () => api.put("/comms/notifications/mark-all-read"),
     audit: (query = "") => api.get(`/comms/audit${query}`),
 };
+
+export const analyticsApi = {
+    attritionRisk: () => api.get("/analytics/attrition-risk"),
+    absenceAnomalies: () => api.get("/analytics/absence-anomalies"),
+};
