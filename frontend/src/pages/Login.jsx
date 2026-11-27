@@ -82,7 +82,7 @@ export default function Login() {
     return (
         <div className="min-h-screen grid lg:grid-cols-12 bg-background selection:bg-primary/20">
             {/* Left Promotional Panel */}
-            <div className="hidden lg:flex lg:col-span-5 flex-col justify-between relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/95 text-primary-foreground p-10 xl:p-14 shadow-2xl">
+            <div className="hidden lg:flex lg:col-span-5 flex-col justify-between relative overflow-hidden bg-linear-to-br from-primary via-primary/90 to-primary/95 text-primary-foreground p-10 xl:p-14 shadow-2xl">
                 {/* Background decorative glow elements */}
                 <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-white/10 blur-3xl pointer-events-none" />
                 <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-black/15 blur-3xl pointer-events-none" />
@@ -224,7 +224,7 @@ export default function Login() {
                     </form>
 
                     {/* Testing Accounts Card */}
-                    <div className="rounded-2xl border border-dashed border-primary/35 bg-primary/[0.04] p-4 sm:p-5 space-y-3">
+                    <div className="rounded-2xl border border-dashed border-primary/35 bg-primary/4 p-4 sm:p-5 space-y-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
                                 <FlaskConical className="h-4 w-4" />
@@ -239,7 +239,7 @@ export default function Login() {
                                     key={acc.role}
                                     type="button"
                                     onClick={() => useTestAccount(acc)}
-                                    className="group w-full flex items-center justify-between gap-3 rounded-xl bg-background/90 border border-border/80 px-3.5 py-2.5 text-left hover:border-primary/50 hover:bg-primary/[0.04] hover:shadow-xs transition-all duration-150 cursor-pointer"
+                                    className="group w-full flex items-center justify-between gap-3 rounded-xl bg-background/90 border border-border/80 px-3.5 py-2.5 text-left hover:border-primary/50 hover:bg-primary/4 hover:shadow-xs transition-all duration-150 cursor-pointer"
                                 >
                                     <div className="min-w-0 space-y-0.5">
                                         <div className="flex items-center gap-2">
