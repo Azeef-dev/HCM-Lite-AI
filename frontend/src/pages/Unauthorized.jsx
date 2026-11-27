@@ -31,7 +31,7 @@ export default function Unauthorized() {
 
                 {/* Big Gradient 403 Typography */}
                 <div className="space-y-2">
-                    <h1 className="text-7xl sm:text-8xl font-black tracking-tighter bg-gradient-to-br from-destructive via-destructive/80 to-primary/60 bg-clip-text text-transparent select-none">
+                    <h1 className="text-7xl sm:text-8xl font-black tracking-tighter bg-linear-to-br from-destructive via-destructive/80 to-primary/60 bg-clip-text text-transparent select-none">
                         403
                     </h1>
                     <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
