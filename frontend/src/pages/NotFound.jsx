@@ -30,7 +30,7 @@ export default function NotFound() {
 
                 {/* Big Gradient 404 Typography */}
                 <div className="space-y-2">
-                    <h1 className="text-7xl sm:text-8xl font-black tracking-tighter bg-gradient-to-br from-primary via-primary/80 to-primary/40 bg-clip-text text-transparent select-none">
+                    <h1 className="text-7xl sm:text-8xl font-black tracking-tighter bg-linear-to-br from-primary via-primary/80 to-primary/40 bg-clip-text text-transparent select-none">
                         404
                     </h1>
                     <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
