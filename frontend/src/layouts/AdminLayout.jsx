@@ -1,5 +1,5 @@
 import DashboardLayout from "./DashboardLayout";
-import { LayoutDashboard, Building2, Users, Calendar, Wallet, Bot, Megaphone, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Calendar, Wallet, Bot, Megaphone, ShieldCheck, TrendingDown } from "lucide-react";
 
 const navItems = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
