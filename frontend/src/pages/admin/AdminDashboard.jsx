@@ -53,7 +53,7 @@ export default function AdminDashboard() {
     }
 
     if (loading) return <DashboardSkeleton />;
-    if (error) return <p className="text-sm text-destructive">{error}</p>;
+    if (error) return <p className="text-sm text-destructive p-6">{error}</p>;
     if (!data) return null;
 
     const deptList = toArray(data.headcountByDepartment);
@@ -62,33 +62,34 @@ export default function AdminDashboard() {
     const maxDept = Math.max(1, ...deptList.map((d) => d.count ?? d.value ?? 0));
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-6 pb-10">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 rounded-2xl bg-muted/30 border border-border/60 backdrop-blur-md">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">Admin Dashboard</h1>
                     <p className="text-sm text-muted-foreground mt-0.5">Company-wide overview & executive analytics</p>
                 </div>
                 <Button
                     onClick={handleGenerateAiSummary}
                     disabled={summarizing}
                     variant="outline"
-                    className="gap-2 border-primary/30 text-primary hover:bg-primary/5"
+                    className="gap-2 h-10 px-4 border-primary/30 text-primary hover:bg-primary/5 cursor-pointer"
                 >
                     {summarizing ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                         <Sparkles className="h-4 w-4" />
                     )}
-                    {aiSummary ? "Refresh AI Summary" : "Generate AI Summary"}
+                    <span>{aiSummary ? "Refresh AI Summary" : "Generate AI Summary"}</span>
                 </Button>
             </div>
 
             {/* AI Summary Banner */}
             {aiSummary && (
-                <Card className="border-primary/30 bg-primary/5 shadow-xs animate-in fade-in duration-200">
+                <Card className="border-primary/30 bg-primary/5 shadow-xs">
                     <CardHeader className="pb-2 flex flex-row items-center gap-2">
                         <Sparkles className="h-4 w-4 text-primary" />
-                        <CardTitle className="text-sm font-semibold text-primary">
+                        <CardTitle className="text-sm font-medium text-primary">
                             AI Executive Summary
                         </CardTitle>
                     </CardHeader>
@@ -100,6 +101,7 @@ export default function AdminDashboard() {
                 </Card>
             )}
 
+            {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard label="Headcount" value={safe(data.kpis?.headcount ?? data.headcount, 0)} icon={Users} color="primary" />
                 <StatCard label="Attrition YTD" value={`${safe(data.kpis?.attritionYtd ?? data.attritionYtd, 0)}%`} icon={TrendingDown} color="warning" />
@@ -107,13 +109,14 @@ export default function AdminDashboard() {
                 <StatCard label="Avg Salary" value={`Rs ${Number(safe(data.kpis?.avgSalary ?? data.avgSalary, 0)).toLocaleString()}`} icon={Banknote} color="info" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="shadow-xs">
-                    <CardHeader className="flex flex-row items-center gap-2 pb-3">
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <Card className="lg:col-span-7 shadow-xs border-border/60">
+                    <CardHeader className="flex flex-row items-center gap-2 pb-3 border-b border-border/60">
                         <Building2 className="h-4 w-4 text-primary" />
                         <CardTitle className="text-base font-semibold">Headcount by Department</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-4">
                         {deptList.length === 0 ? (
                             <EmptyState icon={Building2} title="No department data yet" description="Add departments and employees to see this breakdown." />
                         ) : (
@@ -122,9 +125,9 @@ export default function AdminDashboard() {
                                     const label = d.department || d.key || d._id || "Unknown";
                                     const count = d.count ?? d.value ?? 0;
                                     return (
-                                        <div key={label + i}>
-                                            <div className="flex justify-between text-sm mb-1">
-                                                <span className="font-medium">{label}</span>
+                                        <div key={label + i} className="space-y-1">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="font-medium text-foreground">{label}</span>
                                                 <span className="text-muted-foreground">{count}</span>
                                             </div>
                                             <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -138,20 +141,20 @@ export default function AdminDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="shadow-xs">
-                    <CardHeader className="flex flex-row items-center gap-2 pb-3">
+                <Card className="lg:col-span-5 shadow-xs border-border/60">
+                    <CardHeader className="flex flex-row items-center gap-2 pb-3 border-b border-border/60">
                         <PieChart className="h-4 w-4 text-primary" />
                         <CardTitle className="text-base font-semibold">Gender Distribution</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-4">
                         {genderList.length === 0 ? (
                             <EmptyState icon={PieChart} title="No data yet" />
                         ) : (
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                                 {genderList.map((g, i) => (
-                                    <div key={(g.gender || g.key || i) + ""} className="flex items-center justify-between text-sm py-2 border-b last:border-0">
-                                        <span className="capitalize">{g.gender || g.key || "Unknown"}</span>
-                                        <span className="font-semibold">{g.count ?? g.value ?? 0}</span>
+                                    <div key={(g.gender || g.key || i) + ""} className="flex items-center justify-between text-sm py-2.5 px-3 rounded-lg bg-background border border-border/40">
+                                        <span className="capitalize text-foreground">{g.gender || g.key || "Unknown"}</span>
+                                        <span className="font-medium">{g.count ?? g.value ?? 0}</span>
                                     </div>
                                 ))}
                             </div>
@@ -160,20 +163,21 @@ export default function AdminDashboard() {
                 </Card>
             </div>
 
-            <Card className="shadow-xs">
-                <CardHeader className="flex flex-row items-center gap-2 pb-3">
+            {/* Audit Activity */}
+            <Card className="shadow-xs border-border/60">
+                <CardHeader className="flex flex-row items-center gap-2 pb-3 border-b border-border/60">
                     <History className="h-4 w-4 text-primary" />
                     <CardTitle className="text-base font-semibold">Recent Audit Activity</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-4">
                     {auditList.length === 0 ? (
                         <EmptyState icon={History} title="No activity yet" description="Actions performed across the app will show up here." />
                     ) : (
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                             {auditList.map((a, i) => (
-                                <div key={a._id || i} className="flex items-center justify-between text-sm py-2.5 border-b last:border-0">
+                                <div key={a._id || i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 py-2 border-b last:border-0 text-sm">
                                     <div>
-                                        <span className="font-medium">{a.actorName || "Admin"}</span>{" "}
+                                        <span className="font-medium text-foreground">{a.actorName || "Admin"}</span>{" "}
                                         <span className="text-muted-foreground">{a.action} {a.entity}</span>
                                     </div>
                                     <span className="text-xs text-muted-foreground shrink-0">
@@ -192,13 +196,15 @@ export default function AdminDashboard() {
 function DashboardSkeleton() {
     return (
         <div className="space-y-6">
-            <Skeleton className="h-8 w-56" />
+            <Skeleton className="h-20 w-full rounded-2xl" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24" />)}
+                {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Skeleton className="h-64" /><Skeleton className="h-64" />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <Skeleton className="lg:col-span-7 h-64 rounded-xl" />
+                <Skeleton className="lg:col-span-5 h-64 rounded-xl" />
             </div>
+            <Skeleton className="h-64 rounded-xl" />
         </div>
     );
 }
