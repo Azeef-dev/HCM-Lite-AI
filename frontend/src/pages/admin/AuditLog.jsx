@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/EmptyState";
 import DropdownSelect from "@/components/DropdownSelect";
+import { describeActionMarker, humanizeAuditState, humanizeAuditDiff } from "@/lib/auditFormat";
 import {
     ShieldCheck,
     Clock,
@@ -17,6 +18,9 @@ import {
     ChevronLeft,
     ChevronRight,
     RefreshCw,
+    Sparkles,
+    ArrowRight,
+    FilePlus2,
 } from "lucide-react";
 
 const ACTION_COLORS = {
@@ -82,6 +86,14 @@ export default function AuditLog() {
         loadLogs(1);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [entityFilter, actionFilter]);
+
+    // Decide how to present this entry's before/after without ever showing
+    // raw JSON to the person — not everyone reviewing the audit trail is a
+    // developer.
+    const marker = selectedLog ? describeActionMarker(selectedLog.after) : null;
+    const wasCreated = selectedLog ? (typeof selectedLog.before === "string" || !selectedLog.before) : false;
+    const createdFields = selectedLog && wasCreated ? humanizeAuditState(selectedLog.after) : null;
+    const diff = selectedLog && !wasCreated ? humanizeAuditDiff(selectedLog.before, selectedLog.after) : null;
 
     return (
         <div className="space-y-6">
@@ -258,53 +270,84 @@ export default function AuditLog() {
 
             {selectedLog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150 backdrop-blur-xs">
-                    <div className="bg-background rounded-xl border max-w-3xl w-full max-h-[85vh] flex flex-col shadow-xl">
+                    <div className="bg-background rounded-xl border max-w-xl w-full max-h-[85vh] flex flex-col shadow-xl">
                         <div className="p-4 border-b flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <FileJson className="h-5 w-5 text-primary" />
                                 <h3 className="font-semibold text-base">
-                                    Audit Change Details: {selectedLog.action.toUpperCase()} {selectedLog.entity}
+                                    {selectedLog.action.toUpperCase()} — {selectedLog.entity}
                                 </h3>
                             </div>
                             <Button variant="ghost" size="icon" onClick={() => setSelectedLog(null)} className="h-8 w-8">
                                 <X className="h-4 w-4" />
                             </Button>
                         </div>
-                        <div className="p-6 overflow-y-auto space-y-4">
-                            <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground border-b pb-3">
-                                <div>
-                                    <span className="font-medium text-foreground">Actor: </span>
-                                    {selectedLog.actorName || "System"}
-                                </div>
-                                <div>
-                                    <span className="font-medium text-foreground">Recorded At: </span>
-                                    {new Date(selectedLog.createdAt).toLocaleString()}
-                                </div>
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-muted-foreground uppercase">
-                                        Before State
-                                    </label>
-                                    <pre className="text-xs bg-muted/60 p-3 rounded-lg overflow-x-auto font-mono max-h-80 border">
-                                        {selectedLog.before
-                                            ? JSON.stringify(selectedLog.before, null, 2)
-                                            : "No prior state (Initial creation)"}
-                                    </pre>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-muted-foreground uppercase">
-                                        After State
-                                    </label>
-                                    <pre className="text-xs bg-muted/60 p-3 rounded-lg overflow-x-auto font-mono max-h-80 border">
-                                        {selectedLog.after
-                                            ? JSON.stringify(selectedLog.after, null, 2)
-                                            : "No after state"}
-                                    </pre>
-                                </div>
+                        <div className="px-4 py-3 border-b grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                            <div>
+                                <span className="font-medium text-foreground block mb-0.5">Performed by</span>
+                                {selectedLog.actorName || selectedLog.actor?.name || "System"}
+                            </div>
+                            <div>
+                                <span className="font-medium text-foreground block mb-0.5">Recorded At</span>
+                                {new Date(selectedLog.createdAt).toLocaleString()}
                             </div>
                         </div>
+
+                        <div className="p-5 overflow-y-auto space-y-4">
+                            {marker ? (
+                                <div className="flex items-start gap-3 rounded-xl bg-primary/5 border border-primary/20 p-4">
+                                    <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                                    <p className="text-sm text-foreground">{marker}</p>
+                                </div>
+                            ) : wasCreated ? (
+                                <div>
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <FilePlus2 className="h-4 w-4 text-emerald-600" />
+                                        <p className="text-sm font-medium">
+                                            New {(selectedLog.entity || "record").toLowerCase()} created with these details
+                                        </p>
+                                    </div>
+                                    {createdFields && createdFields.length > 0 ? (
+                                        <div className="rounded-xl border divide-y">
+                                            {createdFields.map((f) => (
+                                                <div key={f.label} className="flex items-center justify-between gap-4 px-3.5 py-2 text-sm">
+                                                    <span className="text-muted-foreground">{f.label}</span>
+                                                    <span className="font-medium text-right">{f.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground">No additional details were recorded.</p>
+                                    )}
+                                </div>
+                            ) : diff && diff.length > 0 ? (
+                                <div>
+                                    <p className="text-sm font-medium mb-3">
+                                        {diff.length} field{diff.length > 1 ? "s" : ""} changed
+                                    </p>
+                                    <div className="rounded-xl border divide-y">
+                                        {diff.map((c) => (
+                                            <div key={c.label} className="px-3.5 py-2.5 text-sm">
+                                                <p className="text-xs text-muted-foreground mb-1">{c.label}</p>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="px-2 py-0.5 rounded-md bg-destructive/10 text-destructive text-xs line-through">
+                                                        {c.from}
+                                                    </span>
+                                                    <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 text-xs font-medium">
+                                                        {c.to}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">No changes could be summarized for this entry.</p>
+                            )}
+                        </div>
+
                         <div className="p-3 border-t flex justify-end">
                             <Button variant="outline" size="sm" onClick={() => setSelectedLog(null)}>
                                 Close
