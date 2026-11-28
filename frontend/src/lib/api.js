@@ -173,6 +173,7 @@ export const employeeApi = {
     list: (query = "") => api.get(`/employees${query}`),
     get: (id) => api.get(`/employees/${id}`),
     update: (id, payload) => api.put(`/employees/${id}`, payload),
+    updatePhoto: (id, photoUrl) => api.put(`/employees/${id}/photo`, { photoUrl }),
     csvImport: (formData, dryRun) =>
         api.post(`/employees/csv-import?dryRun=${dryRun ? "true" : "false"}`, formData, { isForm: true }),
     exportCsv: () =>
