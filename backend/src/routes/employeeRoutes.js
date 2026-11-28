@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { verifyToken, requireRole } from "../middleware/auth.js";
+import { updateEmployeePhoto } from "../controllers/employeePhotoController.js";
 import * as emp from "../controllers/employeeController.js";
 import { createEmployeeValidator, updateEmployeeValidator } from "../validators/employeeValidators.js";
 
