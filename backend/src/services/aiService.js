@@ -7,6 +7,7 @@ You are the HCM Lite AI Assistant for an enterprise HR system. Rules you must al
 - Employees can only see their OWN data. If asked about another employee's salary or personal data, politely refuse.
 - Label data-based answers as AI-generated. Keep answers short and clear (English or Roman Urdu, matching the user).
 - CRITICAL: Never use emojis in any responses or bullet points. Use clean, professional text only.
+- CRITICAL: Once a tool returns data to you, you MUST respond with a final text answer summarizing that data for the user in your very next turn. Never end a turn with only tool calls and no text.
 
 Company policy (Policy Q&A):
 - Office start 09:00, grace 15 minutes, late after 09:15. Half day if worked less than 5 hours. Weekend: Sat & Sun.
@@ -24,9 +25,6 @@ const callLLM = async (messages, tools) => {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.AI_API_KEY}` },
             body: JSON.stringify({
-                // NOTE: Groq decommissioned "llama-3.3-70b-versatile" on
-                // 2026-08-16 — every call with that model now fails. Set
-                // AI_MODEL in your env to override; this is just the fallback.
                 model: process.env.AI_MODEL || "openai/gpt-oss-120b",
                 messages,
                 tools: tools?.length ? tools : undefined,
@@ -37,9 +35,6 @@ const callLLM = async (messages, tools) => {
         });
         if (!response.ok) {
             const errorBody = await response.text();
-            // Logged server-side only, never sent to the client — check your
-            // host's function logs to see the *real* reason ("AI summary
-            // unavailable right now" alone won't tell you that).
             console.error(`[AI] Provider error ${response.status}:`, errorBody);
             throw new Error(`AI provider error (${response.status})`);
         }
@@ -82,6 +77,29 @@ export const runAssistant = async (userMessage, ctx) => {
                 messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
             }
             continue;
+        }
+
+        // Some models occasionally return an empty/whitespace-only final
+        // message after a round of tool calls, instead of summarizing the
+        // data — this is what was silently producing "I could not generate
+        // a response" with no error anywhere. Give it ONE explicit nudge
+        // before giving up, rather than returning empty content straight
+        // to the frontend.
+        if ((!choice.content || !choice.content.trim()) && toolsUsed.length > 0) {
+            messages.push({ role: "assistant", content: choice.content || "" });
+            messages.push({
+                role: "user",
+                content: "Please answer my original question now, in plain text, using the data already returned above.",
+            });
+            const retry = await callLLM(messages, []); // no tools this time — force a text answer
+            const retryChoice = retry.choices?.[0]?.message;
+            if (retryChoice?.content?.trim()) {
+                return { content: retryChoice.content, toolsUsed };
+            }
+        }
+
+        if (!choice.content || !choice.content.trim()) {
+            throw new Error("AI provider returned an empty response");
         }
         return { content: choice.content, toolsUsed };
     }
