@@ -79,12 +79,6 @@ export const runAssistant = async (userMessage, ctx) => {
             continue;
         }
 
-        // Some models occasionally return an empty/whitespace-only final
-        // message after a round of tool calls, instead of summarizing the
-        // data — this is what was silently producing "I could not generate
-        // a response" with no error anywhere. Give it ONE explicit nudge
-        // before giving up, rather than returning empty content straight
-        // to the frontend.
         if ((!choice.content || !choice.content.trim()) && toolsUsed.length > 0) {
             messages.push({ role: "assistant", content: choice.content || "" });
             messages.push({
