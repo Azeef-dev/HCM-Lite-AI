@@ -7,6 +7,7 @@ const employeeSchema = new mongoose.Schema(
         name: { type: String, required: true },
         email: { type: String, required: true, lowercase: true },
         phone: { type: String },
+        photoUrl: { type: String, default: null },
         address: { type: String },
         department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
         designation: { type: mongoose.Schema.Types.ObjectId, ref: "Designation" },
