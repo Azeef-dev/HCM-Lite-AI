@@ -14,6 +14,7 @@ router.post("/", requireRole("hr"), createEmployeeValidator, emp.createEmployee)
 router.get("/export", requireRole("hr"), emp.exportEmployeesCsv);
 router.post("/csv-import", requireRole("hr"), upload.single("file"), emp.importEmployeesCsv);
 router.get("/:id", emp.getEmployee);
+router.put("/:id/photo", verifyToken, updateEmployeePhoto);
 router.put("/:id", updateEmployeeValidator, emp.updateEmployee);
 
 export default router;
